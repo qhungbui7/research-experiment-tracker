@@ -2281,22 +2281,22 @@
 
     // Initialize Application
     document.addEventListener("DOMContentLoaded", () => {
-      initTheme();
-      initNavTabs();
-      initExperimentSelector();
-      initSearch();
-      initDirectionsFilter();
-      initDrawerControls();
-      initRunComparer();
-      initCommandPalette();
+      try { initTheme(); } catch (e) { console.error("initTheme error:", e); }
+      try { initNavTabs(); } catch (e) { console.error("initNavTabs error:", e); }
+      try { initExperimentSelector(); } catch (e) { console.error("initExperimentSelector error:", e); }
+      try { initSearch(); } catch (e) { console.error("initSearch error:", e); }
+      try { initDirectionsFilter(); } catch (e) { console.error("initDirectionsFilter error:", e); }
+      try { initDrawerControls(); } catch (e) { console.error("initDrawerControls error:", e); }
+      try { initRunComparer(); } catch (e) { console.error("initRunComparer error:", e); }
+      try { initCommandPalette(); } catch (e) { console.error("initCommandPalette error:", e); }
       
       // Populate Views
-      renderOverview();
-      renderOverviewFixes();
-      renderDirections();
-      renderIssuesTable();
-      renderGraph();
-      renderDocuments();
+      try { renderOverview(); } catch (e) { console.error("renderOverview error:", e); }
+      try { renderOverviewFixes(); } catch (e) { console.error("renderOverviewFixes error:", e); }
+      try { renderDirections(); } catch (e) { console.error("renderDirections error:", e); }
+      try { renderIssuesTable(); } catch (e) { console.error("renderIssuesTable error:", e); }
+      try { renderGraph(); } catch (e) { console.error("renderGraph error:", e); }
+      try { renderDocuments(); } catch (e) { console.error("renderDocuments error:", e); }
     });
 
     // -------------------------------------------------------------
@@ -2356,6 +2356,8 @@
         renderRunComparer();
       }
     }
+    window.switchTab = switchTab;
+    window.showTab = switchTab;
 
     // -------------------------------------------------------------
     // Experiment Selector
@@ -3955,8 +3957,9 @@
       if (!rounds.length) return;
 
       const optionsHtml = rounds.map((r, idx) => {
-        const title = r.subject || r.round_name;
-        return `<option value="${idx}">${r.round_name} (${r.experiment}) — ${escapeHtml(title.slice(0, 36))}</option>`;
+        const roundName = r.round || r.round_name || `Round ${idx + 1}`;
+        const title = r.focus || r.subject || roundName;
+        return `<option value="${idx}">${escapeHtml(roundName)} (${escapeHtml(r.experiment || '')}) — ${escapeHtml(title.slice(0, 36))}</option>`;
       }).join("");
 
       selA.innerHTML = optionsHtml;
@@ -4011,6 +4014,11 @@
         return;
       }
 
+      const rAName = rA.round || rA.round_name || 'Round A';
+      const rBName = rB.round || rB.round_name || 'Round B';
+      const rAFocus = rA.focus || rA.subject || 'No subject';
+      const rBFocus = rB.focus || rB.subject || 'No subject';
+
       // Compute files diff
       const filesA = new Set(rA.files_changed || []);
       const filesB = new Set(rB.files_changed || []);
@@ -4027,9 +4035,9 @@
                 <span class="status-badge active">Baseline (A)</span>
                 <span style="font-family: var(--font-mono); font-size: 11px; color: var(--text-dim);">${escapeHtml(rA.date || 'Undated')}</span>
               </div>
-              <h2 style="font-size: 18px; margin-bottom: 6px;">${escapeHtml(rA.round_name)}</h2>
-              <div style="font-size: 13px; color: var(--accent); font-weight: 500;">${escapeHtml(rA.subject || 'No subject')}</div>
-              <div style="font-size: 11.5px; color: var(--text-muted); margin-top: 4px;">Experiment: <strong>${escapeHtml(rA.experiment)}</strong></div>
+              <h2 style="font-size: 18px; margin-bottom: 6px;">${escapeHtml(rAName)}</h2>
+              <div style="font-size: 13px; color: var(--accent); font-weight: 500;">${escapeHtml(rAFocus)}</div>
+              <div style="font-size: 11.5px; color: var(--text-muted); margin-top: 4px;">Experiment: <strong>${escapeHtml(rA.experiment || '')}</strong></div>
             </div>
 
             <div class="compare-section">
@@ -4072,9 +4080,9 @@
                 <span class="status-badge fixed">Comparison (B)</span>
                 <span style="font-family: var(--font-mono); font-size: 11px; color: var(--text-dim);">${escapeHtml(rB.date || 'Undated')}</span>
               </div>
-              <h2 style="font-size: 18px; margin-bottom: 6px;">${escapeHtml(rB.round_name)}</h2>
-              <div style="font-size: 13px; color: var(--accent); font-weight: 500;">${escapeHtml(rB.subject || 'No subject')}</div>
-              <div style="font-size: 11.5px; color: var(--text-muted); margin-top: 4px;">Experiment: <strong>${escapeHtml(rB.experiment)}</strong></div>
+              <h2 style="font-size: 18px; margin-bottom: 6px;">${escapeHtml(rBName)}</h2>
+              <div style="font-size: 13px; color: var(--accent); font-weight: 500;">${escapeHtml(rBFocus)}</div>
+              <div style="font-size: 11.5px; color: var(--text-muted); margin-top: 4px;">Experiment: <strong>${escapeHtml(rB.experiment || '')}</strong></div>
             </div>
 
             <div class="compare-section">
@@ -4209,13 +4217,15 @@
 
         // Search Rounds
         (DATA.rounds || []).forEach(r => {
-          if (!q || r.round_name.toLowerCase().includes(q) || (r.subject && r.subject.toLowerCase().includes(q))) {
+          const roundName = r.round || r.round_name || "";
+          const roundTitle = r.focus || r.subject || "";
+          if (!q || roundName.toLowerCase().includes(q) || roundTitle.toLowerCase().includes(q)) {
             hits.push({
               type: "Round",
-              title: `${r.round_name} (${r.experiment})`,
-              subtitle: r.subject || "No subject",
+              title: `${roundName} (${r.experiment || ""})`,
+              subtitle: roundTitle || "Review round",
               action: () => {
-                const node = (DATA.nodes || []).find(n => n.id === `${r.experiment}/${r.round_name}`);
+                const node = (DATA.nodes || []).find(n => n.id === `${r.experiment}/${roundName}`);
                 if (node) showNodeDetails(node);
                 closePalette();
               }

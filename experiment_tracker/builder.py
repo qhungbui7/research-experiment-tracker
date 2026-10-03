@@ -966,8 +966,10 @@ def build_html_data(
             {
                 "experiment": r.experiment,
                 "round": r.round_name,
+                "round_name": r.round_name,
                 "date": r.date,
                 "focus": r.focus,
+                "subject": r.focus,
                 "trigger": r.trigger,
                 "report": r.report,
                 "open_issues": r.open_issues,

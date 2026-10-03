@@ -3,6 +3,8 @@
 
 ## 2026-10-03
 
+- 17:58 - Fixed client-side TypeError in initRunComparer by safely resolving round/round_name and focus/subject properties
+- 17:58 - Added defensive try-catch wrappers around all view initializers and registered window.showTab/switchTab
 - 17:42 - Added Section 8 to PRINCIPLES.md adopting autonomous research principles (tree-search, dual-agent verification, anti-narrative rules, confound isolation)
 - 17:42 - Implemented interactive Progressive Hypothesis Tree Search Visualizer & Decision Matrix in Directions tab
 - 17:42 - Integrated Autonomous Discovery & Rigor Scorecard in Overview tab with claim provenance and early-pruning metrics
