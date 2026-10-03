@@ -15,7 +15,7 @@ def looks_like_path(text: str) -> bool:
     stripped = text.strip()
     if any(char in stripped for char in ' "\'()<>'):
         return False
-    if stripped.startswith(("runs/", "reports/", "scripts/", "configs/", "logs/", "artifacts/", "experiments/")):
+    if stripped.startswith(("runs/", "reports/", "scripts/", "configs/", "logs/", "artifacts/", "experiments/", "restart/")):
         return True
     return bool(re.search(r"\.(py|sh|jsonl|json|yaml|yml|md|zip|txt|toml|csv)$", stripped))
 
@@ -42,7 +42,7 @@ def extract_paths(text: str, reviews_dir_prefix: str = "reports/reviews") -> lis
     """Find referenced files in free text from reviews, issues, and changelog."""
     paths = extract_backtick_paths(text)
     regex_paths = re.findall(
-        r"(?<![\w-])(?:runs|reports|scripts|configs|artifacts|logs)/[A-Za-z0-9_./{}*,=-]+|"
+        r"(?<![\w-])(?:runs|reports|scripts|configs|artifacts|logs|restart)/[A-Za-z0-9_./{}*,=-]+|"
         r"(?<![\w-])[A-Za-z0-9_./-]+\.(?:py|sh|jsonl|json|yaml|yml|md|zip|toml|csv)",
         text,
     )
@@ -103,7 +103,7 @@ def href_for_path_from_base(path: str, base_dir: Path, root: Path, reviews_dir_p
             return ""
         return Path(os.path.relpath(matches[0], base_dir)).as_posix()
     normalized = normalize_path(path, reviews_dir_prefix)
-    if normalized.startswith(("reports/", "runs/", "scripts/", "configs/", "artifacts/", "logs/")) or re.search(
+    if normalized.startswith(("reports/", "runs/", "scripts/", "configs/", "artifacts/", "logs/", "restart/")) or re.search(
         r"\.(py|sh|jsonl|json|yaml|yml|md|zip|txt|toml|csv)$", normalized
     ):
         target = (root / normalized).resolve()

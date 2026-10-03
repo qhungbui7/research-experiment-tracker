@@ -115,12 +115,20 @@ def parse_reviews_readme(path: Path, default_experiment: str = "amt") -> tuple[l
         exp = row.get("Experiment", "").strip() or default_experiment
         if raw_rnd.isdigit():
             rnd_name = f"round_{raw_rnd.zfill(3)}"
-        elif not raw_rnd.startswith("round_"):
+        elif not raw_rnd.startswith("round_") and not raw_rnd.startswith(
+            ("study_", "diag_", "benchmark_", "horizon_", "roadmap_", "path_")
+        ):
             rnd_name = f"round_{raw_rnd}"
         else:
             rnd_name = raw_rnd
 
-        rep = row.get("Report", "").strip() or f"reports/reviews/{rnd_name}"
+        rep = row.get("Report", "").strip() or row.get("Audit", "").strip()
+        if not rep:
+            issues_fixed = row.get("Issues fixed", "").strip()
+            if any(issues_fixed.startswith(p) for p in ("restart/", "reports/", "`")):
+                rep = issues_fixed.strip("`")
+            else:
+                rep = f"reports/reviews/{rnd_name}" if rnd_name.startswith("round_") else f"restart/reviews/{rnd_name}"
         rounds.append(
             Round(
                 experiment=exp,
