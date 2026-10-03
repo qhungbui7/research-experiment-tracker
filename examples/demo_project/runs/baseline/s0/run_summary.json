@@ -1,0 +1,13 @@
+{
+  "active_args": {
+    "report_run_name": "soliton_baseline_s0",
+    "seed": 0,
+    "dt": 0.001
+  },
+  "final_metrics": {
+    "l2_error": 0.0024,
+    "speed_ratio": 0.998,
+    "runtime_sec": 14.2
+  },
+  "status": "completed"
+}

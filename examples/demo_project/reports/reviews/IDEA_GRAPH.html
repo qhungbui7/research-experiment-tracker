@@ -1,0 +1,2238 @@
+<!doctype html>
+<html lang="en">
+<!--
+  Static review graph UI.
+  scripts/build_review_graph.py injects the graph payload below, then this file
+  handles filtering, layout, drawing, and the detail panel in the browser.
+-->
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>demo-soliton-research Review &amp; Experiment Lineage</title>
+  <style>
+    :root {
+      --bg: #f8fafc;
+      --panel: #ffffff;
+      --ink: #111827;
+      --muted: #64748b;
+      --line: #cbd5e1;
+      --accent: #2563eb;
+      --experiment: #0284c7;
+      --round: #16a34a;
+      --issue: #ea580c;
+      --next: #dc2626;
+      --report: #7c3aed;
+      --file: #475569;
+      --change: #ca8a04;
+      --run: #15803d;
+      --commit: #6366f1;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      height: 100vh;
+      overflow: hidden;
+      background: var(--bg);
+      color: var(--ink);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      letter-spacing: 0;
+    }
+    button, input, select { font: inherit; }
+    .shell {
+      display: grid;
+      grid-template-rows: 58px minmax(0, 1fr);
+      height: 100vh;
+    }
+    .topbar {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 0 18px;
+      border-bottom: 1px solid var(--line);
+      background: #ffffff;
+    }
+    .brand {
+      font-weight: 760;
+      font-size: 17px;
+      min-width: 190px;
+    }
+    .search {
+      flex: 1;
+      min-width: 220px;
+      height: 36px;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      padding: 0 12px;
+      background: #f8fafc;
+      color: var(--ink);
+    }
+    .control {
+      height: 36px;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      padding: 0 10px;
+      background: #ffffff;
+      color: var(--ink);
+    }
+    .btn {
+      height: 36px;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      background: #ffffff;
+      color: var(--ink);
+      padding: 0 10px;
+      cursor: pointer;
+    }
+    .btn:hover { border-color: var(--accent); color: var(--accent); }
+    .layout {
+      display: grid;
+      grid-template-columns: 280px minmax(0, 1fr) 360px;
+      min-height: 0;
+    }
+    .sidebar, .detail {
+      min-height: 0;
+      overflow: auto;
+      background: #ffffff;
+    }
+    .sidebar { border-right: 1px solid var(--line); }
+    .detail { border-left: 1px solid var(--line); }
+    .section {
+      padding: 14px 16px;
+      border-bottom: 1px solid #e2e8f0;
+    }
+    .section h2 {
+      margin: 0 0 10px;
+      font-size: 12px;
+      text-transform: uppercase;
+      color: var(--muted);
+      letter-spacing: .08em;
+    }
+    .checks {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px 10px;
+    }
+    .check {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      color: #334155;
+      font-size: 13px;
+    }
+    .stats {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+    .stat {
+      border: 1px solid #e2e8f0;
+      border-radius: 6px;
+      padding: 9px;
+      background: #f8fafc;
+    }
+    .stat strong { display: block; font-size: 18px; }
+    .stat span { color: var(--muted); font-size: 12px; }
+    .list {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .list button {
+      text-align: left;
+      border: 1px solid #e2e8f0;
+      background: #ffffff;
+      border-radius: 6px;
+      padding: 8px;
+      cursor: pointer;
+      color: #1f2937;
+    }
+    .list button:hover, .list button.active {
+      border-color: var(--accent);
+      background: #eff6ff;
+    }
+    .list-title {
+      display: block;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      font-weight: 650;
+      font-size: 13px;
+    }
+    .list-subtitle {
+      display: block;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      color: var(--muted);
+      font-size: 12px;
+      margin-top: 2px;
+    }
+    .graph-wrap {
+      min-width: 0;
+      min-height: 0;
+      display: grid;
+      grid-template-rows: 42px minmax(0, 1fr);
+    }
+    .graph-toolbar {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 0 12px;
+      border-bottom: 1px solid var(--line);
+      background: #f8fafc;
+      color: var(--muted);
+      font-size: 13px;
+    }
+    .graph-toolbar .spacer { flex: 1; }
+    .viewport {
+      position: relative;
+      overflow: auto;
+      background:
+        linear-gradient(#e2e8f0 1px, transparent 1px),
+        linear-gradient(90deg, #e2e8f0 1px, transparent 1px);
+      background-size: 32px 32px;
+      background-color: #f8fafc;
+    }
+    .scale {
+      position: relative;
+    }
+    .canvas {
+      position: relative;
+      transform-origin: 0 0;
+    }
+    .edges {
+      position: absolute;
+      inset: 0;
+      overflow: visible;
+      pointer-events: none;
+    }
+    .edge-path {
+      fill: none;
+      stroke: #94a3b8;
+      stroke-width: 1.3;
+      opacity: .55;
+    }
+    .edge-path.dimmed { opacity: .14; }
+    .edge-path.connected {
+      stroke: var(--accent);
+      stroke-width: 2.4;
+      opacity: .95;
+    }
+    .edge-label {
+      fill: #475569;
+      font-size: 11px;
+      paint-order: stroke;
+      stroke: #f8fafc;
+      stroke-width: 4px;
+      stroke-linejoin: round;
+      opacity: .72;
+      pointer-events: none;
+    }
+    .edge-label.dimmed { opacity: .12; }
+    .edge-label.connected {
+      fill: #1d4ed8;
+      font-weight: 700;
+      opacity: 1;
+    }
+    .node-card {
+      position: absolute;
+      width: 248px;
+      min-height: 78px;
+      border: 1px solid #cbd5e1;
+      border-left-width: 5px;
+      border-radius: 7px;
+      background: rgba(255,255,255,.96);
+      box-shadow: 0 4px 14px rgba(15, 23, 42, .08);
+      padding: 9px 10px 10px;
+      cursor: pointer;
+      overflow: hidden;
+    }
+    .node-card:hover, .node-card.selected {
+      outline: 2px solid rgba(37, 99, 235, .35);
+      box-shadow: 0 8px 22px rgba(15, 23, 42, .14);
+    }
+    .node-card.connected {
+      outline: 1px solid rgba(37, 99, 235, .25);
+    }
+    .node-card.dimmed {
+      opacity: .34;
+    }
+    .node-card.experiment { border-left-color: var(--experiment); }
+    .node-card.round { border-left-color: var(--round); }
+    .node-card.issue { border-left-color: var(--issue); }
+    .node-card.next { border-left-color: var(--next); }
+    .node-card.report { border-left-color: var(--report); }
+    .node-card.file { border-left-color: var(--file); }
+    .node-card.change { border-left-color: var(--change); }
+    .node-card.run { border-left-color: var(--run); }
+    .node-card.commit { border-left-color: var(--commit); }
+    .node-kicker {
+      display: flex;
+      gap: 6px;
+      align-items: center;
+      color: var(--muted);
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: .06em;
+      margin-bottom: 5px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      border-radius: 999px;
+      border: 1px solid #cbd5e1;
+      padding: 1px 6px;
+      background: #f8fafc;
+      font-size: 11px;
+      color: #334155;
+    }
+    .pill.p0 { color: #991b1b; border-color: #fecaca; background: #fef2f2; }
+    .pill.p1 { color: #9a3412; border-color: #fed7aa; background: #fff7ed; }
+    .node-title {
+      font-weight: 720;
+      font-size: 14px;
+      line-height: 1.25;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+    .node-subtitle {
+      margin-top: 5px;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.25;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+    .metric {
+      display: inline;
+      border-radius: 4px;
+      padding: 0 3px;
+      background: #fef3c7;
+      color: #92400e;
+      font-weight: 760;
+      box-shadow: inset 0 -1px 0 #f59e0b;
+    }
+    .metric.critical {
+      background: #fee2e2;
+      color: #991b1b;
+      box-shadow: inset 0 -1px 0 #ef4444;
+    }
+    .metric.good {
+      background: #dcfce7;
+      color: #166534;
+      box-shadow: inset 0 -1px 0 #22c55e;
+    }
+    .metric.ref {
+      background: #e0f2fe;
+      color: #075985;
+      box-shadow: inset 0 -1px 0 #0ea5e9;
+    }
+    .detail-inner { padding: 18px; }
+    .detail h1 {
+      margin: 0 0 8px;
+      font-size: 20px;
+      line-height: 1.2;
+    }
+    .detail h2 {
+      margin: 18px 0 8px;
+      font-size: 12px;
+      text-transform: uppercase;
+      color: var(--muted);
+      letter-spacing: .08em;
+    }
+    .detail p {
+      margin: 0;
+      color: #334155;
+      line-height: 1.45;
+      white-space: pre-wrap;
+    }
+    .badges {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin: 10px 0 14px;
+    }
+    .metric-strip {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin: 8px 0 14px;
+    }
+    .metric-chip {
+      display: inline-flex;
+      align-items: center;
+      min-height: 24px;
+      border-radius: 999px;
+      padding: 3px 8px;
+      border: 1px solid #f59e0b;
+      background: #fffbeb;
+      color: #92400e;
+      font-size: 12px;
+      font-weight: 760;
+    }
+    .metric-chip.critical {
+      border-color: #fecaca;
+      background: #fef2f2;
+      color: #991b1b;
+    }
+    .metric-chip.good {
+      border-color: #bbf7d0;
+      background: #f0fdf4;
+      color: #166534;
+    }
+    .metric-chip.ref {
+      border-color: #bae6fd;
+      background: #f0f9ff;
+      color: #075985;
+    }
+    .kv {
+      display: grid;
+      grid-template-columns: 104px minmax(0, 1fr);
+      gap: 8px;
+      font-size: 13px;
+      padding: 6px 0;
+      border-bottom: 1px solid #e2e8f0;
+    }
+    .kv span:first-child { color: var(--muted); }
+    .kv span:last-child {
+      overflow-wrap: anywhere;
+      color: #1f2937;
+    }
+    .open-link {
+      display: inline-flex;
+      align-items: center;
+      min-height: 34px;
+      border: 1px solid #bfdbfe;
+      border-radius: 6px;
+      padding: 7px 10px;
+      background: #eff6ff;
+      color: #1d4ed8;
+      font-size: 13px;
+      font-weight: 650;
+      cursor: pointer;
+    }
+    .file-list {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .file-row, .connection-row {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 8px;
+      align-items: center;
+    }
+    .file-name {
+      border: 1px solid #e2e8f0;
+      border-radius: 6px;
+      padding: 8px 10px;
+      color: #1f2937;
+      background: #ffffff;
+      overflow-wrap: anywhere;
+      font-size: 13px;
+    }
+    .mini-link {
+      border: 1px solid #bfdbfe;
+      border-radius: 6px;
+      padding: 8px 10px;
+      background: #eff6ff;
+      color: #1d4ed8;
+      font-size: 12px;
+      font-weight: 650;
+      white-space: nowrap;
+    }
+    .mini-button {
+      border: 1px solid #bbf7d0;
+      border-radius: 6px;
+      padding: 8px 10px;
+      background: #f0fdf4;
+      color: #166534;
+      font-size: 12px;
+      font-weight: 650;
+      white-space: nowrap;
+      cursor: pointer;
+    }
+    .file-actions {
+      display: inline-flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      align-items: center;
+    }
+    .primary-action {
+      border-color: #bbf7d0;
+      background: #f0fdf4;
+      color: #166534;
+    }
+    .preview-note {
+      margin: 0 0 8px;
+      color: var(--muted);
+      font-size: 12px;
+    }
+    .preview-toolbar {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      margin: 0 0 8px;
+    }
+    .toggle-group {
+      display: inline-flex;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      overflow: hidden;
+      background: #ffffff;
+    }
+    .toggle-btn {
+      min-height: 30px;
+      border: 0;
+      border-right: 1px solid var(--line);
+      padding: 5px 9px;
+      background: #ffffff;
+      color: #334155;
+      cursor: pointer;
+      font-size: 12px;
+      font-weight: 650;
+    }
+    .toggle-btn:last-child { border-right: 0; }
+    .toggle-btn.active {
+      background: #eff6ff;
+      color: #1d4ed8;
+    }
+    .file-preview {
+      max-height: 460px;
+      overflow: auto;
+      border: 1px solid #cbd5e1;
+      border-radius: 7px;
+      background: #0f172a;
+      color: #e5e7eb;
+      padding: 12px;
+      font: 12px/1.5 ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+      white-space: pre-wrap;
+      tab-size: 2;
+    }
+    .markdown-preview {
+      max-height: 520px;
+      overflow: auto;
+      border: 1px solid #cbd5e1;
+      border-radius: 7px;
+      background: #ffffff;
+      padding: 14px 16px;
+      color: #1f2937;
+    }
+    .markdown-body {
+      line-height: 1.55;
+      overflow-wrap: anywhere;
+      font-size: 13px;
+    }
+    .markdown-body h1, .markdown-body h2, .markdown-body h3,
+    .markdown-body h4, .markdown-body h5, .markdown-body h6 {
+      margin: 18px 0 8px;
+      color: #111827;
+      line-height: 1.25;
+      text-transform: none;
+      letter-spacing: 0;
+    }
+    .markdown-body h1:first-child,
+    .markdown-body h2:first-child,
+    .markdown-body h3:first-child { margin-top: 0; }
+    .markdown-body h1 { font-size: 22px; }
+    .markdown-body h2 {
+      font-size: 17px;
+      border-bottom: 1px solid #e2e8f0;
+      padding-bottom: 4px;
+    }
+    .markdown-body h3 { font-size: 15px; }
+    .markdown-body p { margin: 0 0 10px; color: #1f2937; white-space: normal; }
+    .markdown-body ul, .markdown-body ol { margin: 0 0 10px 20px; padding: 0; }
+    .markdown-body li { margin: 3px 0; }
+    .markdown-body code {
+      border-radius: 4px;
+      background: #f1f5f9;
+      color: #0f172a;
+      padding: 1px 4px;
+      font: 12px ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+    }
+    .markdown-body pre {
+      margin: 10px 0;
+      border: 1px solid #cbd5e1;
+      border-radius: 7px;
+      background: #0f172a;
+      color: #e5e7eb;
+      padding: 12px;
+      overflow: auto;
+      white-space: pre-wrap;
+      tab-size: 2;
+      font: 12px/1.5 ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+    }
+    .markdown-body pre code {
+      background: transparent;
+      color: inherit;
+      padding: 0;
+    }
+    .markdown-body blockquote {
+      margin: 0 0 10px;
+      padding-left: 12px;
+      border-left: 3px solid #cbd5e1;
+      color: #475569;
+    }
+    .markdown-body table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 0 0 12px;
+      font-size: 12px;
+    }
+    .markdown-body th, .markdown-body td {
+      border: 1px solid #cbd5e1;
+      padding: 6px 8px;
+      text-align: left;
+      vertical-align: top;
+    }
+    .markdown-body th { background: #f1f5f9; }
+    .hidden { display: none; }
+    .file-preview .metric {
+      color: #fef3c7;
+      background: rgba(245, 158, 11, .22);
+      box-shadow: inset 0 -1px 0 #f59e0b;
+    }
+    .file-preview .metric.critical {
+      color: #fecaca;
+      background: rgba(239, 68, 68, .28);
+      box-shadow: inset 0 -1px 0 #ef4444;
+    }
+    .file-preview .metric.good {
+      color: #bbf7d0;
+      background: rgba(34, 197, 94, .22);
+      box-shadow: inset 0 -1px 0 #22c55e;
+    }
+    .file-preview .metric.ref {
+      color: #bae6fd;
+      background: rgba(14, 165, 233, .22);
+      box-shadow: inset 0 -1px 0 #0ea5e9;
+    }
+    .file-preview .metric.dim {
+      color: #6b7280;
+      background: transparent;
+      box-shadow: none;
+    }
+    a { color: var(--accent); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    .topbar-divider {
+      width: 1px;
+      height: 24px;
+      background: var(--line);
+      flex-shrink: 0;
+    }
+    .btn.active {
+      background: #eff6ff;
+      color: var(--accent);
+      border-color: #bfdbfe;
+    }
+    .section-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 0;
+    }
+    .section-row h2 { margin: 0; }
+    .band-label {
+      font-size: 10px;
+      font-weight: 700;
+      fill: var(--muted);
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+    }
+    .band-line {
+      stroke: #e2e8f0;
+      stroke-width: 1.5;
+    }
+    @media (max-width: 1050px) {
+      .layout { grid-template-columns: 240px minmax(0, 1fr); }
+      .detail { display: none; }
+      .brand { min-width: 150px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <header class="topbar">
+      <div class="brand">Review Idea Graph</div>
+      <input id="search" class="search" type="search" placeholder="Search issues, files, rounds">
+      <select id="experimentSelect" class="control"></select>
+      <select id="statusSelect" class="control">
+        <option value="active">Active issues</option>
+        <option value="open">Open only</option>
+        <option value="done">Done issues</option>
+        <option value="all">All issues</option>
+      </select>
+      <button id="fitBtn" class="btn" type="button">Fit</button>
+      <button id="resetBtn" class="btn" type="button">Reset</button>
+      <div class="topbar-divider"></div>
+      <button id="graphBtn" class="btn active" type="button">Graph</button>
+      <button id="timelineBtn" class="btn" type="button">Timeline</button>
+      <div class="topbar-divider"></div>
+      <button id="highSevBtn" class="btn" type="button">P0/P1</button>
+    </header>
+    <div class="layout">
+      <aside class="sidebar">
+        <div class="section">
+          <h2>Visible</h2>
+          <div id="kindChecks" class="checks"></div>
+        </div>
+        <div class="section">
+          <h2>Counts</h2>
+          <div id="stats" class="stats"></div>
+        </div>
+        <div class="section">
+          <div class="section-row">
+            <h2>Nodes</h2>
+            <button id="listSortBtn" class="btn" type="button" style="font-size:11px;height:26px;padding:0 8px;">By Severity</button>
+          </div>
+          <div id="nodeList" class="list"></div>
+        </div>
+      </aside>
+      <main class="graph-wrap">
+        <div class="graph-toolbar">
+          <span id="visibleSummary"></span>
+          <span class="spacer"></span>
+          <button id="zoomOut" class="btn" type="button">-</button>
+          <button id="zoomIn" class="btn" type="button">+</button>
+          <span id="zoomLabel"></span>
+        </div>
+        <div id="viewport" class="viewport">
+          <div id="scale" class="scale">
+            <div id="canvas" class="canvas">
+              <svg id="edges" class="edges"></svg>
+              <div id="nodes"></div>
+            </div>
+          </div>
+        </div>
+      </main>
+      <aside class="detail">
+        <div id="detail" class="detail-inner"></div>
+      </aside>
+    </div>
+  </div>
+  <script>
+    // DATA is generated from reports/reviews/README.md, TRACKER.md, and CHANGELOG.md.
+    const DATA = {
+  "nodes": [
+    {
+      "id": "exp_experiment_001_fc397cff",
+      "kind": "experiment",
+      "title": "experiment_001",
+      "subtitle": "NCVA Soliton Parameter Extraction Verification",
+      "body": "**Evidence base:** `runs/baseline/s0/run_summary.json`\n\n**Rounds:** `round_001`",
+      "path": "reports/reviews/experiments/experiment_001/README.md",
+      "experiment": "experiment_001",
+      "round": "",
+      "severity": "",
+      "status": "",
+      "experiments": [],
+      "meta": {
+        "Subject": "NCVA Soliton Parameter Extraction Verification",
+        "Rounds": "`round_001`",
+        "Open issues": "P2x1"
+      },
+      "preview": {
+        "available": true,
+        "kind": "markdown",
+        "format": "markdown",
+        "text": "# Experiment 001: Soliton Parameter Extraction\n\nInvestigation of non-conservative variational approximation (NCVA) Ordinary Differential Equation (ODE) parameters versus Full Partial Differential Equation (PDE) simulation.\n\n- Subject: NCVA Soliton Extraction\n- Evidence Base: `runs/baseline/s0/run_summary.json`\n- Status: Active\n",
+        "truncated": false,
+        "sizeBytes": 329
+      }
+    },
+    {
+      "id": "file_runs_baseline_s0_run_summary_json_f4df9bdd",
+      "kind": "file",
+      "title": "run_summary.json",
+      "subtitle": "runs/baseline/s0/run_summary.json",
+      "body": "",
+      "path": "runs/baseline/s0/run_summary.json",
+      "experiment": "",
+      "round": "",
+      "severity": "",
+      "status": "",
+      "experiments": [],
+      "meta": {},
+      "preview": {
+        "available": true,
+        "kind": "pretty json",
+        "format": "json",
+        "text": "{\n  \"active_args\": {\n    \"report_run_name\": \"soliton_baseline_s0\",\n    \"seed\": 0,\n    \"dt\": 0.001\n  },\n  \"final_metrics\": {\n    \"l2_error\": 0.0024,\n    \"speed_ratio\": 0.998,\n    \"runtime_sec\": 14.2\n  },\n  \"status\": \"completed\"\n}",
+        "truncated": false,
+        "sizeBytes": 229
+      }
+    },
+    {
+      "id": "round_experiment_001__round_001_dad7e967",
+      "kind": "round",
+      "title": "experiment_001 / round_001",
+      "subtitle": "2026-10-01 | Soliton speed extraction & L2 error check",
+      "body": "### What changed\n\n- Implemented automated curve fitting and phase unwrapping in `src/soliton.py`.\n- Configured grid resolution in `configs/baseline.yaml`.\n\n### Evidence summary\n\n- PDE simulation results in `runs/baseline/s0/run_summary.json`.\n- Initial audit in `reports/reviews/experiments/experiment_001/round_001/review/initial_audit.md`.\n\n### Outcome\n\nIssue I-001 opened; I-000 resolved",
+      "path": "reports/reviews/experiments/experiment_001/round_001/CONTEXT.md",
+      "experiment": "experiment_001",
+      "round": "round_001",
+      "severity": "",
+      "status": "",
+      "experiments": [],
+      "meta": {
+        "Date": "2026-10-01",
+        "Focus": "Soliton speed extraction & L2 error check",
+        "Trigger": "Initial simulation run",
+        "Reviewers": "Soliton Team",
+        "Open issues entering": "- 1 open issue entering this round.",
+        "Issues opened": "I-001",
+        "Issues resolved": "I-000"
+      },
+      "preview": {
+        "available": true,
+        "kind": "markdown",
+        "format": "markdown",
+        "text": "**Experiment:** experiment_001\n**Round:** round_001\n**Date:** 2026-10-01\n**Focus:** Soliton speed extraction & L2 error check\n**Trigger:** Initial simulation run\n**Reviewers:** Soliton Team\n**Outcome:** Issue I-001 opened; I-000 resolved\n**Issues opened:** I-001\n**Issues resolved:** I-000\n\n## What changed\n- Implemented automated curve fitting and phase unwrapping in `src/soliton.py`.\n- Configured grid resolution in `configs/baseline.yaml`.\n\n## Evidence available\n- PDE simulation results in `runs/baseline/s0/run_summary.json`.\n- Initial audit in `reports/reviews/experiments/experiment_001/round_001/review/initial_audit.md`.\n\n## Open issue count\n- 1 open issue entering this round.\n",
+        "truncated": false,
+        "sizeBytes": 688
+      }
+    },
+    {
+      "id": "report_experiment_001__round_001___reports_reviews_expe_fd8cba40",
+      "kind": "report",
+      "title": "initial_audit.md`",
+      "subtitle": "Report for round_001",
+      "body": "",
+      "path": "`reports/reviews/experiments/experiment_001/round_001/review/initial_audit.md`",
+      "experiment": "experiment_001",
+      "round": "round_001",
+      "severity": "",
+      "status": "",
+      "experiments": [],
+      "meta": {},
+      "preview": {
+        "available": true,
+        "kind": "markdown",
+        "format": "markdown",
+        "text": "# Round 001 Review: Soliton Baseline Audit\n\n## Findings\n1. Speed ratio observed is `0.998`, which closely matches the theoretical prediction (`1.000 ± 0.005`).\n2. Overall L2 trajectory error is `0.0024`.\n3. An edge artifact was noticed near grid boundary `x=12.5` resulting in tracker issue `I-001`.\n",
+        "truncated": false,
+        "sizeBytes": 301
+      }
+    },
+    {
+      "id": "file_src_soliton_py_a15319bb",
+      "kind": "file",
+      "title": "soliton.py",
+      "subtitle": "src/soliton.py",
+      "body": "",
+      "path": "src/soliton.py",
+      "experiment": "",
+      "round": "",
+      "severity": "",
+      "status": "",
+      "experiments": [],
+      "meta": {},
+      "preview": {
+        "available": false,
+        "reason": "not a local text file path"
+      }
+    },
+    {
+      "id": "file_reports_reviews_experiments_experiment_001_round_ed18698c",
+      "kind": "file",
+      "title": "initial_audit.md",
+      "subtitle": "reports/reviews/experiments/experiment_001/round_001/review/initial_audit.md",
+      "body": "",
+      "path": "reports/reviews/experiments/experiment_001/round_001/review/initial_audit.md",
+      "experiment": "",
+      "round": "",
+      "severity": "",
+      "status": "",
+      "experiments": [],
+      "meta": {},
+      "preview": {
+        "available": true,
+        "kind": "markdown",
+        "format": "markdown",
+        "text": "# Round 001 Review: Soliton Baseline Audit\n\n## Findings\n1. Speed ratio observed is `0.998`, which closely matches the theoretical prediction (`1.000 ± 0.005`).\n2. Overall L2 trajectory error is `0.0024`.\n3. An edge artifact was noticed near grid boundary `x=12.5` resulting in tracker issue `I-001`.\n",
+        "truncated": false,
+        "sizeBytes": 301
+      }
+    },
+    {
+      "id": "file_configs_baseline_yaml_5cacca6e",
+      "kind": "file",
+      "title": "baseline.yaml",
+      "subtitle": "configs/baseline.yaml",
+      "body": "",
+      "path": "configs/baseline.yaml",
+      "experiment": "",
+      "round": "",
+      "severity": "",
+      "status": "",
+      "experiments": [],
+      "meta": {},
+      "preview": {
+        "available": true,
+        "kind": "yaml",
+        "format": "yaml",
+        "text": "model:\n  type: \"ncva_soliton\"\n  amplitude: 1.0\n  width: 1.5\n  chirp: 0.0\nsimulation:\n  timesteps: 1000\n  dt: 0.001\n  grid_points: 512\n",
+        "truncated": false,
+        "sizeBytes": 134
+      }
+    },
+    {
+      "id": "issue_i_001__experiment_001__round_001_44cb877d",
+      "kind": "issue",
+      "title": "I-001",
+      "subtitle": "Chirp unwrapping boundary artifact near x=12.5",
+      "body": "Evidence in `runs/baseline/s0/run_summary.json`. Next step: apply phase thresholding filter.",
+      "path": "",
+      "experiment": "experiment_001",
+      "round": "round_001",
+      "severity": "P2",
+      "status": "open",
+      "experiments": [],
+      "meta": {
+        "Next step": "--",
+        "Source section": "Open Issues",
+        "Source round": "experiment_001/round_001"
+      }
+    },
+    {
+      "id": "next_i_001_9f5852f4",
+      "kind": "next",
+      "title": "Next for I-001",
+      "subtitle": "--",
+      "body": "",
+      "path": "",
+      "experiment": "experiment_001",
+      "round": "round_001",
+      "severity": "P2",
+      "status": "open",
+      "experiments": [],
+      "meta": {}
+    },
+    {
+      "id": "issue_i_000__experiment_001__round_001_d13e6f0f",
+      "kind": "issue",
+      "title": "I-000",
+      "subtitle": "Initial grid boundary condition reflection",
+      "body": "Resolved by adding sponge absorber layer.",
+      "path": "",
+      "experiment": "experiment_001",
+      "round": "round_001",
+      "severity": "P1",
+      "status": "fixed",
+      "experiments": [],
+      "meta": {
+        "Next step": "commit 4a2b1c",
+        "Source section": "Resolved Issues",
+        "Source round": "experiment_001/round_001"
+      }
+    },
+    {
+      "id": "next_i_000__commit_4a2b1c_c01c0bf6",
+      "kind": "next",
+      "title": "Next for I-000",
+      "subtitle": "commit 4a2b1c",
+      "body": "",
+      "path": "",
+      "experiment": "experiment_001",
+      "round": "round_001",
+      "severity": "P1",
+      "status": "fixed",
+      "experiments": [],
+      "meta": {}
+    },
+    {
+      "id": "change_2026_10_01_10_00_00__experiment_baseline_soliton_8120ccc3",
+      "kind": "change",
+      "title": "2026-10-01 10:00:00",
+      "subtitle": "Experiment: baseline soliton speed comparison",
+      "body": "- Config: configs/baseline.yaml\n- Runs: `runs/baseline/s0/run_summary.json`\n- Status: FULL_RUN\n- Files changed: `src/soliton.py`, `configs/baseline.yaml`\n- Related: `experiment_001` / `round_001`",
+      "path": "changelog.md",
+      "experiment": "",
+      "round": "",
+      "severity": "",
+      "status": "",
+      "experiments": [
+        "experiment_001"
+      ],
+      "meta": {
+        "Files changed": "runs/baseline/s0/run_summary.json, src/soliton.py, configs/baseline.yaml"
+      },
+      "preview": {
+        "available": true,
+        "kind": "markdown",
+        "format": "markdown",
+        "text": "# Changelog\n\n## [2026-10-01 10:00:00] -- Experiment: baseline soliton speed comparison\n- Config: configs/baseline.yaml\n- Runs: `runs/baseline/s0/run_summary.json`\n- Status: FULL_RUN\n- Files changed: `src/soliton.py`, `configs/baseline.yaml`\n- Related: `experiment_001` / `round_001`\n",
+        "truncated": false,
+        "sizeBytes": 283
+      }
+    },
+    {
+      "id": "run_runs_baseline_s0_b492f63d",
+      "kind": "run",
+      "title": "baseline/s0",
+      "subtitle": "completed",
+      "body": "",
+      "path": "runs/baseline/s0/run_summary.json",
+      "experiment": "",
+      "round": "",
+      "severity": "",
+      "status": "",
+      "experiments": [],
+      "meta": {
+        "Method": "baseline",
+        "Tag": "s0",
+        "Status": "completed"
+      },
+      "preview": {
+        "available": true,
+        "kind": "pretty json",
+        "format": "json",
+        "text": "{\n  \"active_args\": {\n    \"report_run_name\": \"soliton_baseline_s0\",\n    \"seed\": 0,\n    \"dt\": 0.001\n  },\n  \"final_metrics\": {\n    \"l2_error\": 0.0024,\n    \"speed_ratio\": 0.998,\n    \"runtime_sec\": 14.2\n  },\n  \"status\": \"completed\"\n}",
+        "truncated": false,
+        "sizeBytes": 229
+      }
+    }
+  ],
+  "edges": [
+    {
+      "source": "exp_experiment_001_fc397cff",
+      "target": "file_runs_baseline_s0_run_summary_json_f4df9bdd",
+      "label": "evidence"
+    },
+    {
+      "source": "exp_experiment_001_fc397cff",
+      "target": "round_experiment_001__round_001_dad7e967",
+      "label": "round"
+    },
+    {
+      "source": "round_experiment_001__round_001_dad7e967",
+      "target": "report_experiment_001__round_001___reports_reviews_expe_fd8cba40",
+      "label": "report"
+    },
+    {
+      "source": "round_experiment_001__round_001_dad7e967",
+      "target": "file_src_soliton_py_a15319bb",
+      "label": "evidence"
+    },
+    {
+      "source": "round_experiment_001__round_001_dad7e967",
+      "target": "file_reports_reviews_experiments_experiment_001_round_ed18698c",
+      "label": "evidence"
+    },
+    {
+      "source": "round_experiment_001__round_001_dad7e967",
+      "target": "file_configs_baseline_yaml_5cacca6e",
+      "label": "evidence"
+    },
+    {
+      "source": "round_experiment_001__round_001_dad7e967",
+      "target": "file_runs_baseline_s0_run_summary_json_f4df9bdd",
+      "label": "evidence"
+    },
+    {
+      "source": "round_experiment_001__round_001_dad7e967",
+      "target": "issue_i_001__experiment_001__round_001_44cb877d",
+      "label": "finding"
+    },
+    {
+      "source": "issue_i_001__experiment_001__round_001_44cb877d",
+      "target": "file_runs_baseline_s0_run_summary_json_f4df9bdd",
+      "label": "evidence"
+    },
+    {
+      "source": "issue_i_001__experiment_001__round_001_44cb877d",
+      "target": "next_i_001_9f5852f4",
+      "label": "next"
+    },
+    {
+      "source": "round_experiment_001__round_001_dad7e967",
+      "target": "issue_i_000__experiment_001__round_001_d13e6f0f",
+      "label": "finding"
+    },
+    {
+      "source": "issue_i_000__experiment_001__round_001_d13e6f0f",
+      "target": "next_i_000__commit_4a2b1c_c01c0bf6",
+      "label": "next"
+    },
+    {
+      "source": "round_experiment_001__round_001_dad7e967",
+      "target": "issue_i_001__experiment_001__round_001_44cb877d",
+      "label": "mentions"
+    },
+    {
+      "source": "round_experiment_001__round_001_dad7e967",
+      "target": "issue_i_000__experiment_001__round_001_d13e6f0f",
+      "label": "mentions"
+    },
+    {
+      "source": "round_experiment_001__round_001_dad7e967",
+      "target": "change_2026_10_01_10_00_00__experiment_baseline_soliton_8120ccc3",
+      "label": "changelog"
+    },
+    {
+      "source": "change_2026_10_01_10_00_00__experiment_baseline_soliton_8120ccc3",
+      "target": "file_runs_baseline_s0_run_summary_json_f4df9bdd",
+      "label": "changed file"
+    },
+    {
+      "source": "change_2026_10_01_10_00_00__experiment_baseline_soliton_8120ccc3",
+      "target": "file_src_soliton_py_a15319bb",
+      "label": "changed file"
+    },
+    {
+      "source": "change_2026_10_01_10_00_00__experiment_baseline_soliton_8120ccc3",
+      "target": "file_configs_baseline_yaml_5cacca6e",
+      "label": "changed file"
+    },
+    {
+      "source": "run_runs_baseline_s0_b492f63d",
+      "target": "file_runs_baseline_s0_run_summary_json_f4df9bdd",
+      "label": "run artifact"
+    }
+  ],
+  "experiments": [
+    "experiment_001"
+  ],
+  "kindOrder": [
+    "experiment",
+    "round",
+    "issue",
+    "next",
+    "report",
+    "file",
+    "change",
+    "run",
+    "snapshot",
+    "commit"
+  ]
+};
+    const nodesById = new Map(DATA.nodes.map((node) => [node.id, node]));
+    const activeStatuses = new Set(["open", "partial", "pending"]);
+    const doneStatuses = new Set(["fixed", "resolved", "closed"]);
+    const severityRank = { P0: 0, P1: 1, P2: 2, P3: 3, P4: 4 };
+    const notablePatternSource = String.raw`(\bP[0-4]\b|\bI-\d{3}\b|\b\d+(?:\.\d+)?\s*\/\s*\d+(?:\.\d+)?\b|\b-?\d+(?:\.\d+)?\s*%|\b(?:success_rate|success|mean_rc|rc|return|reward|R|FPR|TPR|AUC|KL)\s*[=:]\s*-?\d+(?:\.\d+)?|\bt\s*=\s*\d+(?:\.\d+)?\s*[kM]?\b|\b\d+(?:\.\d+)?\s*(?:M|k|steps?|seeds?|episodes?|success(?:es)?|timesteps?)\b|(?<!\d)\d+(?:\.\d+)?\b|(?<!\d)0?\.\d+\b)`;
+    const fileNumberPatternSource = String.raw`(\bP[0-4]\b|\bI-\d{3}\b|\b\d+(?:\.\d+)?\s*\/\s*\d+(?:\.\d+)?\b|\b-?\d+(?:\.\d+)?\s*%|\b(?:success_rate|success|mean_rc|rc|return|reward|R|FPR|TPR|AUC|KL)\s*[=:]\s*-?\d+(?:\.\d+)?|\bt\s*=\s*\d+(?:\.\d+)?\s*[kM]?\b|\b\d+(?:\.\d+)?\s*(?:M|k|steps?|seeds?|episodes?|success(?:es)?|timesteps?)\b|\b-?\d+(?:\.\d+)?(?:e[+-]?\d+)?\b)`;
+    const kindLabels = {
+      experiment: "Experiments",
+      round: "Rounds",
+      issue: "Issues",
+      next: "Next",
+      report: "Reports",
+      file: "Files",
+      change: "Changelog",
+      run: "Runs",
+      commit: "Commits"
+    };
+    const lanes = {
+      experiment: 0,
+      round: 1,
+      issue: 2,
+      next: 3,
+      report: 3,
+      file: 4,
+      change: 4,
+      run: 5,
+      commit: 6
+    };
+    const state = {
+      query: "",
+      experiment: "all",
+      status: "active",
+      kinds: new Set(DATA.kindOrder),
+      zoom: 1,
+      selected: "",
+      layout: "graph",
+      listSort: "default",
+      highSevOnly: false
+    };
+    const el = {
+      search: document.getElementById("search"),
+      experimentSelect: document.getElementById("experimentSelect"),
+      statusSelect: document.getElementById("statusSelect"),
+      kindChecks: document.getElementById("kindChecks"),
+      stats: document.getElementById("stats"),
+      nodeList: document.getElementById("nodeList"),
+      visibleSummary: document.getElementById("visibleSummary"),
+      zoomLabel: document.getElementById("zoomLabel"),
+      viewport: document.getElementById("viewport"),
+      scale: document.getElementById("scale"),
+      canvas: document.getElementById("canvas"),
+      edges: document.getElementById("edges"),
+      nodes: document.getElementById("nodes"),
+      detail: document.getElementById("detail"),
+      graphBtn: document.getElementById("graphBtn"),
+      timelineBtn: document.getElementById("timelineBtn"),
+      highSevBtn: document.getElementById("highSevBtn"),
+      listSortBtn: document.getElementById("listSortBtn")
+    };
+
+    function text(value) {
+      return value == null ? "" : String(value);
+    }
+
+    function notableRegex() {
+      return new RegExp(notablePatternSource, "gi");
+    }
+
+    function fileNumberRegex() {
+      return new RegExp(fileNumberPatternSource, "gi");
+    }
+
+    function metricTone(value) {
+      const token = text(value).trim();
+      const compact = token.replace(/\s+/g, "");
+      const lower = token.toLowerCase();
+      if (/^p0$/i.test(token)) return "critical";
+      if (/^p1$/i.test(token)) return "critical";
+      if (/^i-\d{3}$/i.test(token)) return "ref";
+
+      const fraction = compact.match(/^(-?\d+(?:\.\d+)?)\/(-?\d+(?:\.\d+)?)/);
+      if (fraction) {
+        const numerator = Number(fraction[1]);
+        const denominator = Number(fraction[2]);
+        if (denominator > 0) {
+          const ratio = numerator / denominator;
+          if (ratio <= 0.1) return "critical";
+          if (ratio >= 0.5) return "good";
+        }
+      }
+
+      const percent = compact.match(/^(-?\d+(?:\.\d+)?)%$/);
+      if (percent) {
+        const value = Number(percent[1]);
+        if (value <= 10) return "critical";
+        if (value >= 50) return "good";
+      }
+
+      const labeled = lower.match(/(?:success_rate|success|mean_rc|rc|return|reward|r|fpr|tpr|auc|kl)\s*[=:]\s*(-?\d+(?:\.\d+)?)/);
+      if (labeled) {
+        const value = Number(labeled[1]);
+        if (["success", "success_rate", "mean_rc", "rc", "tpr", "auc"].some((name) => lower.includes(name))) {
+          if (value <= 0.1) return "critical";
+          if (value >= 0.5) return "good";
+        }
+        if (lower.includes("fpr") && value <= 0.01) return "good";
+        if (lower.includes("return") || /\br\s*=/.test(lower)) {
+          if (value < 0) return "critical";
+          if (value > 50) return "good";
+        }
+      }
+
+      const decimal = compact.match(/^-?0?\.\d+$/);
+      if (decimal) {
+        const value = Number(decimal[0]);
+        if (value >= 0 && value <= 0.1) return "critical";
+        if (value >= 0.5 && value <= 1) return "good";
+      }
+
+      return "";
+    }
+
+    function metricClassName(value, baseClass) {
+      const tone = metricTone(value);
+      return tone ? `${baseClass} ${tone}` : baseClass;
+    }
+
+    const METRIC_KEY_PATTERNS = [
+      "reward", "return", "rc", "route_completion", "success",
+      "crash", "oor", "timeout", "fpr", "tpr", "auc", "kl",
+      "score", "loss", "accuracy", "mean_ep", "episode_len",
+    ];
+    const CONFIG_KEY_PATTERNS = [
+      "seed", "n_envs", "batch_size", "n_steps", "total_timesteps",
+      "num_scenarios", "start_seed", "learning_rate", "gamma",
+      "gae_lambda", "grad_norm", "n_epochs", "clip_range",
+      "ent_coef", "vf_coef", "num_lasers", "num_others",
+      "n_rollout", "update_count", "num_updates", "size",
+      "max_grad", "target_kl",
+    ];
+
+    function jsonKeyTone(key) {
+      const lower = key.toLowerCase();
+      if (METRIC_KEY_PATTERNS.some(p => lower.includes(p))) return "metric";
+      if (CONFIG_KEY_PATTERNS.some(p => lower.includes(p))) return "config";
+      return "";
+    }
+
+    function appendHighlightedJson(container, source) {
+      // Single pass: match "key": (sets tone context), "string" (skip), or number (highlight by tone)
+      const TOKEN_RE = /"([\w_]+)"\s*:[ \t]*|"[^"\\]*(?:\\.[^"\\]*)*"|-?\d+(?:\.\d+)?(?:e[+-]?\d+)?/g;
+      let lastIndex = 0;
+      let currentTone = "";
+      for (const match of source.matchAll(TOKEN_RE)) {
+        const idx = match.index;
+        if (idx > lastIndex) {
+          container.appendChild(document.createTextNode(source.slice(lastIndex, idx)));
+        }
+        const raw = match[0];
+        if (match[1] !== undefined) {
+          // JSON key — update tone context, output as plain text
+          currentTone = jsonKeyTone(match[1]);
+          container.appendChild(document.createTextNode(raw));
+        } else if (raw.startsWith('"')) {
+          // String value — output as plain text, reset tone so leaked highlights don't persist
+          currentTone = "";
+          container.appendChild(document.createTextNode(raw));
+        } else {
+          // Bare number — highlight based on current key context
+          const span = document.createElement("span");
+          if (currentTone === "metric") {
+            span.className = metricClassName(raw, "metric");
+          } else if (currentTone === "config") {
+            span.className = "metric dim";
+          } else {
+            span.className = "metric";
+          }
+          span.textContent = raw;
+          container.appendChild(span);
+        }
+        lastIndex = idx + raw.length;
+      }
+      if (lastIndex < source.length) {
+        container.appendChild(document.createTextNode(source.slice(lastIndex)));
+      }
+    }
+
+    function escapeHtml(value) {
+      return text(value)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#39;");
+    }
+
+    function escapeAttribute(value) {
+      return escapeHtml(value).replace(/`/g, "&#96;");
+    }
+
+    function safeHref(value) {
+      const href = text(value).trim();
+      if (/^(javascript|data):/i.test(href)) return "";
+      return href;
+    }
+
+    function markdownInline(value) {
+      return escapeHtml(value)
+        .replace(/`([^`]+)`/g, "<code>$1</code>")
+        .replace(/\[([^\]]+)\]\(([^)\s]+)\)/g, (_match, label, href) => {
+          const safe = safeHref(href);
+          return safe ? `<a href="${escapeAttribute(safe)}" target="_blank" rel="noopener">${label}</a>` : label;
+        })
+        .replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>")
+        .replace(/\*([^*]+)\*/g, "<em>$1</em>");
+    }
+
+    function splitMarkdownRow(line) {
+      let value = text(line).trim();
+      if (value.startsWith("|")) value = value.slice(1);
+      if (value.endsWith("|")) value = value.slice(0, -1);
+      return value.split("|").map((cell) => cell.trim());
+    }
+
+    function isSeparatorRow(line) {
+      const cells = splitMarkdownRow(line);
+      return cells.length > 0 && cells.every((cell) => /^:?-{3,}:?$/.test(cell));
+    }
+
+    function markdownToHtml(markdown) {
+      const lines = text(markdown).split(/\r?\n/);
+      const html = [];
+      let paragraph = [];
+      let listType = "";
+      let listItems = [];
+      let codeLines = [];
+      let inCode = false;
+
+      function flushParagraph() {
+        if (!paragraph.length) return;
+        html.push(`<p>${markdownInline(paragraph.join(" "))}</p>`);
+        paragraph = [];
+      }
+
+      function flushList() {
+        if (!listItems.length) return;
+        html.push(`<${listType}>${listItems.map((item) => `<li>${markdownInline(item)}</li>`).join("")}</${listType}>`);
+        listType = "";
+        listItems = [];
+      }
+
+      function flushCode() {
+        html.push(`<pre><code>${escapeHtml(codeLines.join("\n"))}</code></pre>`);
+        codeLines = [];
+      }
+
+      for (let i = 0; i < lines.length; i += 1) {
+        const line = lines[i];
+        const trimmed = line.trim();
+        if (trimmed.startsWith("```")) {
+          flushParagraph();
+          flushList();
+          if (inCode) {
+            flushCode();
+            inCode = false;
+          } else {
+            inCode = true;
+          }
+          continue;
+        }
+        if (inCode) {
+          codeLines.push(line);
+          continue;
+        }
+        if (!trimmed) {
+          flushParagraph();
+          flushList();
+          continue;
+        }
+        const heading = trimmed.match(/^(#{1,6})\s+(.+)$/);
+        if (heading) {
+          flushParagraph();
+          flushList();
+          html.push(`<h${heading[1].length}>${markdownInline(heading[2])}</h${heading[1].length}>`);
+          continue;
+        }
+        if (/^[-*_]{3,}$/.test(trimmed)) {
+          flushParagraph();
+          flushList();
+          html.push("<hr>");
+          continue;
+        }
+        if (trimmed.includes("|") && i + 1 < lines.length && isSeparatorRow(lines[i + 1])) {
+          flushParagraph();
+          flushList();
+          const header = splitMarkdownRow(trimmed);
+          i += 2;
+          const rows = [];
+          while (i < lines.length && lines[i].trim().includes("|")) {
+            rows.push(splitMarkdownRow(lines[i]));
+            i += 1;
+          }
+          i -= 1;
+          const headHtml = header.map((cell) => `<th>${markdownInline(cell)}</th>`).join("");
+          const bodyHtml = rows
+            .map((row) => `<tr>${row.map((cell) => `<td>${markdownInline(cell)}</td>`).join("")}</tr>`)
+            .join("");
+          html.push(`<table><thead><tr>${headHtml}</tr></thead><tbody>${bodyHtml}</tbody></table>`);
+          continue;
+        }
+        const unordered = line.match(/^\s*[-*+]\s+(.+)$/);
+        const ordered = line.match(/^\s*\d+\.\s+(.+)$/);
+        if (unordered || ordered) {
+          flushParagraph();
+          const nextType = ordered ? "ol" : "ul";
+          if (listType && listType !== nextType) flushList();
+          listType = nextType;
+          listItems.push((unordered || ordered)[1]);
+          continue;
+        }
+        const quote = line.match(/^\s*>\s?(.*)$/);
+        if (quote) {
+          flushParagraph();
+          flushList();
+          html.push(`<blockquote>${markdownInline(quote[1])}</blockquote>`);
+          continue;
+        }
+        paragraph.push(trimmed);
+      }
+      flushParagraph();
+      flushList();
+      if (inCode) flushCode();
+      return html.join("\n");
+    }
+
+    function isMarkdownPreview(node) {
+      return /\.md$/i.test(text(node.href || node.path || node.title));
+    }
+
+    function highlightedHtml(value, includePlainNumbers = false) {
+      const source = text(value);
+      const regex = includePlainNumbers ? fileNumberRegex() : notableRegex();
+      let html = "";
+      let lastIndex = 0;
+      let matched = false;
+      for (const match of source.matchAll(regex)) {
+        const index = match.index || 0;
+        if (index > lastIndex) html += escapeHtml(source.slice(lastIndex, index));
+        html += `<span class="${metricClassName(match[0], "metric")}">${escapeHtml(match[0])}</span>`;
+        lastIndex = index + match[0].length;
+        matched = true;
+      }
+      if (lastIndex < source.length) html += escapeHtml(source.slice(lastIndex));
+      return matched ? html : escapeHtml(source);
+    }
+
+    function appendHighlightedInline(container, value, includePlainNumbers = false) {
+      const source = text(value);
+      const regex = includePlainNumbers ? fileNumberRegex() : notableRegex();
+      let lastIndex = 0;
+      let matched = false;
+      for (const match of source.matchAll(regex)) {
+        const index = match.index || 0;
+        if (index > lastIndex) {
+          container.appendChild(document.createTextNode(source.slice(lastIndex, index)));
+        }
+        const span = document.createElement("span");
+        span.className = metricClassName(match[0], "metric");
+        span.textContent = match[0];
+        container.appendChild(span);
+        lastIndex = index + match[0].length;
+        matched = true;
+      }
+      if (lastIndex < source.length) {
+        container.appendChild(document.createTextNode(source.slice(lastIndex)));
+      }
+      if (!matched) {
+        container.textContent = source;
+      }
+    }
+
+    function previewAvailable(node) {
+      return Boolean(node && node.href);
+    }
+
+    function renderFileContent(container, content, isMarkdown, format) {
+      container.innerHTML = "";
+      const MAX = 8000;
+      const truncated = content.length > MAX;
+      const preview = truncated ? content.slice(0, MAX) + "\n\n... preview truncated ..." : content;
+      const size = `${Math.round(content.length / 1024)} KB`;
+      const note = document.createElement("p");
+      note.className = "preview-note";
+      const isJson = format === "json" || format === "jsonl";
+      if (isMarkdown) {
+        note.textContent = `${size}${truncated ? ", truncated" : ""}. Markdown rendered; Source shows original.`;
+        const toolbar = document.createElement("div");
+        toolbar.className = "preview-toolbar";
+        const toggle = document.createElement("span");
+        toggle.className = "toggle-group";
+        const renderedBtn = document.createElement("button");
+        renderedBtn.type = "button";
+        renderedBtn.className = "toggle-btn active";
+        renderedBtn.textContent = "Rendered";
+        const sourceBtn = document.createElement("button");
+        sourceBtn.type = "button";
+        sourceBtn.className = "toggle-btn";
+        sourceBtn.textContent = "Source";
+        toggle.append(renderedBtn, sourceBtn);
+        toolbar.appendChild(toggle);
+        const rendered = document.createElement("article");
+        rendered.className = "markdown-preview markdown-body";
+        rendered.innerHTML = markdownToHtml(preview);
+        const pre = document.createElement("pre");
+        pre.className = "file-preview hidden";
+        appendHighlightedInline(pre, preview, true);
+        function setMode(mode) {
+          const rm = mode === "rendered";
+          rendered.classList.toggle("hidden", !rm);
+          pre.classList.toggle("hidden", rm);
+          renderedBtn.classList.toggle("active", rm);
+          sourceBtn.classList.toggle("active", !rm);
+        }
+        renderedBtn.addEventListener("click", () => setMode("rendered"));
+        sourceBtn.addEventListener("click", () => setMode("source"));
+        container.append(note, toolbar, rendered, pre);
+      } else if (isJson) {
+        note.textContent = `${size}${truncated ? ", truncated" : ""}. Metric values highlighted; config values dimmed.`;
+        const pre = document.createElement("pre");
+        pre.className = "file-preview";
+        appendHighlightedJson(pre, preview);
+        container.append(note, pre);
+      } else {
+        note.textContent = `${size}${truncated ? ", truncated" : ""}. Numbers highlighted for scanability.`;
+        const pre = document.createElement("pre");
+        pre.className = "file-preview";
+        appendHighlightedInline(pre, preview, true);
+        container.append(note, pre);
+      }
+    }
+
+    function notableNumbersForNode(node) {
+      const metaText = Object.values(node.meta || {}).join(" ");
+      const source = [node.title, node.subtitle, node.body, node.severity, node.status, metaText].map(text).join(" ");
+      const seen = new Set();
+      const numbers = [];
+      for (const match of source.matchAll(notableRegex())) {
+        const label = match[0].replace(/\s+/g, " ").trim();
+        const key = label.toLowerCase();
+        if (seen.has(key)) continue;
+        seen.add(key);
+        numbers.push(label);
+        if (numbers.length >= 14) break;
+      }
+      return numbers;
+    }
+
+    function nodeMatchesQuery(node) {
+      return !state.query || text(node.search).includes(state.query);
+    }
+
+    function nodeMatchesExperiment(node) {
+      if (state.experiment === "all") return true;
+      return node.experiment === state.experiment || (node.experiments || []).includes(state.experiment);
+    }
+
+    function issueStatusAllowed(node) {
+      if (node.kind !== "issue" && node.kind !== "next") return true;
+      const status = text(node.status).toLowerCase();
+      if (state.status === "all") return true;
+      if (state.status === "open") return status === "open";
+      if (state.status === "done") return doneStatuses.has(status);
+      return activeStatuses.has(status);
+    }
+
+    function baseAllowed(node) {
+      if (!state.kinds.has(node.kind)) return false;
+      if (!nodeMatchesExperiment(node)) return false;
+      if (!issueStatusAllowed(node)) return false;
+      if (!nodeMatchesQuery(node)) return false;
+      if (state.highSevOnly && node.kind === "issue" && !["P0", "P1"].includes(node.severity)) return false;
+      return true;
+    }
+
+    function visibleData() {
+      // Keep experiments, rounds, issues, and next steps as the primary graph.
+      // Related files/reports/changelog nodes appear when connected or searched.
+      const primaryKinds = new Set(["experiment", "round", "issue", "next", "change"]);
+      const primary = DATA.nodes.filter((node) => primaryKinds.has(node.kind) && baseAllowed(node));
+      const primaryIds = new Set(primary.map((node) => node.id));
+      const dependent = DATA.nodes.filter((node) => {
+        if (primaryKinds.has(node.kind) || !state.kinds.has(node.kind)) return false;
+        if (!issueStatusAllowed(node)) return false;
+        if (nodeMatchesQuery(node) && nodeMatchesExperiment(node)) return true;
+        return DATA.edges.some((edge) => {
+          if (edge.source === node.id && primaryIds.has(edge.target)) return true;
+          if (edge.target === node.id && primaryIds.has(edge.source)) return true;
+          return false;
+        });
+      });
+      const visible = [...primary, ...dependent].sort(sortNodes);
+      const visibleIds = new Set(visible.map((node) => node.id));
+      const visibleEdges = DATA.edges.filter((edge) => visibleIds.has(edge.source) && visibleIds.has(edge.target));
+      return { nodes: visible, edges: visibleEdges, ids: visibleIds };
+    }
+
+    function sortNodes(a, b) {
+      const laneA = Object.prototype.hasOwnProperty.call(lanes, a.kind) ? lanes[a.kind] : 9;
+      const laneB = Object.prototype.hasOwnProperty.call(lanes, b.kind) ? lanes[b.kind] : 9;
+      const laneDiff = laneA - laneB;
+      if (laneDiff) return laneDiff;
+      const expDiff = text(a.experiment).localeCompare(text(b.experiment));
+      if (expDiff) return expDiff;
+      const roundDiff = text(a.round).localeCompare(text(b.round));
+      if (roundDiff) return roundDiff;
+      const sevA = Object.prototype.hasOwnProperty.call(severityRank, a.severity) ? severityRank[a.severity] : 99;
+      const sevB = Object.prototype.hasOwnProperty.call(severityRank, b.severity) ? severityRank[b.severity] : 99;
+      const severityDiff = sevA - sevB;
+      if (severityDiff) return severityDiff;
+      return text(a.title).localeCompare(text(b.title));
+    }
+
+    function cardSubtitle(node) {
+      if (node.kind === "issue") return node.subtitle;
+      if (node.kind === "round") return node.subtitle;
+      if (node.kind === "file") return node.path;
+      return node.subtitle || node.body;
+    }
+
+    function badge(textValue, className = "") {
+      const span = document.createElement("span");
+      span.className = "pill " + className;
+      span.textContent = textValue;
+      return span;
+    }
+
+    function render() {
+      const graph = visibleData();
+      const positions = layoutNodes(graph.nodes);
+      renderGraph(graph, positions);
+      renderStats(graph.nodes);
+      renderList(graph.nodes);
+      renderDetail(state.selected && graph.ids.has(state.selected) ? nodesById.get(state.selected) : null);
+      el.visibleSummary.textContent = `${graph.nodes.length} nodes / ${graph.edges.length} links`;
+      el.zoomLabel.textContent = `${Math.round(state.zoom * 100)}%`;
+    }
+
+    function layoutNodes(nodes) {
+      if (state.layout === "timeline") return layoutNodesTimeline(nodes);
+      // A deterministic lane layout keeps the lineage easy to scan without a graph library.
+      const colWidth = 318;
+      const top = 42;
+      const rowGap = 112;
+      const positions = new Map();
+      const laneCounts = new Map();
+      nodes.forEach((node) => {
+        const lane = Object.prototype.hasOwnProperty.call(lanes, node.kind) ? lanes[node.kind] : 5;
+        const index = laneCounts.get(lane) || 0;
+        laneCounts.set(lane, index + 1);
+        positions.set(node.id, {
+          x: 28 + lane * colWidth,
+          y: top + index * rowGap,
+          w: 248,
+          h: 82
+        });
+      });
+      return positions;
+    }
+
+    function layoutNodesTimeline(nodes) {
+      // Groups nodes by experiment (Y bands) while keeping kind lanes on the X axis.
+      const colWidth = 318;
+      const rowGap = 112;
+      const bandGap = 52;
+      const top = 42;
+      const positions = new Map();
+      const expOrder = new Map(DATA.experiments.map((e, i) => [e, i]));
+      const numExps = DATA.experiments.length;
+      const getLane = (node) => (Object.prototype.hasOwnProperty.call(lanes, node.kind) ? lanes[node.kind] : 5);
+      const getExpIdx = (node) => {
+        const exp = node.experiment || (node.experiments && node.experiments[0]) || "";
+        return expOrder.has(exp) ? expOrder.get(exp) : numExps;
+      };
+
+      // Count nodes per (expIdx, lane) to calculate band heights
+      const groupSizes = new Map();
+      nodes.forEach((node) => {
+        const key = `${getExpIdx(node)}_${getLane(node)}`;
+        groupSizes.set(key, (groupSizes.get(key) || 0) + 1);
+      });
+
+      // Compute band top Y for each experiment
+      const bandTops = [];
+      let y = top;
+      for (let e = 0; e <= numExps; e++) {
+        bandTops.push(y);
+        let maxRows = 1;
+        for (let l = 0; l <= 5; l++) {
+          maxRows = Math.max(maxRows, groupSizes.get(`${e}_${l}`) || 0);
+        }
+        y += maxRows * rowGap + bandGap;
+      }
+
+      // Assign positions in (expIdx, lane) order
+      const groupCounts = new Map();
+      const sorted = [...nodes].sort((a, b) => {
+        const eA = getExpIdx(a), eB = getExpIdx(b);
+        if (eA !== eB) return eA - eB;
+        return sortNodes(a, b);
+      });
+      sorted.forEach((node) => {
+        const ei = getExpIdx(node);
+        const lane = getLane(node);
+        const key = `${ei}_${lane}`;
+        const index = groupCounts.get(key) || 0;
+        groupCounts.set(key, index + 1);
+        positions.set(node.id, {
+          x: 28 + lane * colWidth,
+          y: bandTops[ei] + index * rowGap,
+          w: 248,
+          h: 82
+        });
+      });
+      return positions;
+    }
+
+    function renderGraph(graph, positions) {
+      const selectedEdgeKeys = new Set();
+      const connectedNodeIds = new Set();
+      if (state.selected) {
+        connectedNodeIds.add(state.selected);
+        graph.edges.forEach((edge) => {
+          if (edge.source === state.selected || edge.target === state.selected) {
+            selectedEdgeKeys.add(edgeKey(edge));
+            connectedNodeIds.add(edge.source);
+            connectedNodeIds.add(edge.target);
+          }
+        });
+      }
+      const width = Math.max(1660, Math.max(0, ...[...positions.values()].map((p) => p.x + p.w + 40)));
+      const height = Math.max(760, Math.max(0, ...[...positions.values()].map((p) => p.y + p.h + 60)));
+      el.canvas.style.width = `${width}px`;
+      el.canvas.style.height = `${height}px`;
+      el.canvas.style.transform = `scale(${state.zoom})`;
+      el.scale.style.width = `${width * state.zoom}px`;
+      el.scale.style.height = `${height * state.zoom}px`;
+      el.edges.setAttribute("width", width);
+      el.edges.setAttribute("height", height);
+      el.edges.setAttribute("viewBox", `0 0 ${width} ${height}`);
+      el.edges.innerHTML = "";
+      el.nodes.innerHTML = "";
+      appendArrowMarker();
+
+      if (state.layout === "timeline") {
+        const expOrder = new Map(DATA.experiments.map((e, i) => [e, i]));
+        DATA.experiments.forEach((exp) => {
+          const expPos = [...positions.entries()].filter(([id]) => {
+            const n = nodesById.get(id);
+            return n && (n.experiment === exp || (n.experiments || []).includes(exp));
+          });
+          if (!expPos.length) return;
+          const minY = Math.min(...expPos.map(([, p]) => p.y)) - 22;
+          const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
+          line.setAttribute("class", "band-line");
+          line.setAttribute("x1", "0");
+          line.setAttribute("y1", String(minY));
+          line.setAttribute("x2", String(width));
+          line.setAttribute("y2", String(minY));
+          el.edges.appendChild(line);
+          const label = document.createElementNS("http://www.w3.org/2000/svg", "text");
+          label.setAttribute("class", "band-label");
+          label.setAttribute("x", "8");
+          label.setAttribute("y", String(minY + 14));
+          label.textContent = exp;
+          el.edges.appendChild(label);
+        });
+      }
+
+      graph.edges.forEach((edge) => {
+        const from = positions.get(edge.source);
+        const to = positions.get(edge.target);
+        if (!from || !to) return;
+        const x1 = from.x + from.w;
+        const y1 = from.y + from.h / 2;
+        const x2 = to.x;
+        const y2 = to.y + to.h / 2;
+        const mid = x1 + Math.max(40, (x2 - x1) / 2);
+        const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+        const isConnected = selectedEdgeKeys.has(edgeKey(edge));
+        path.setAttribute("class", `edge-path${state.selected && !isConnected ? " dimmed" : ""}${isConnected ? " connected" : ""}`);
+        path.setAttribute("d", `M ${x1} ${y1} C ${mid} ${y1}, ${mid} ${y2}, ${x2} ${y2}`);
+        path.setAttribute("marker-end", "url(#arrow)");
+        el.edges.appendChild(path);
+
+        const label = document.createElementNS("http://www.w3.org/2000/svg", "text");
+        label.setAttribute("class", `edge-label${state.selected && !isConnected ? " dimmed" : ""}${isConnected ? " connected" : ""}`);
+        label.setAttribute("x", (x1 + x2) / 2);
+        label.setAttribute("y", (y1 + y2) / 2 - 6);
+        label.setAttribute("text-anchor", "middle");
+        label.textContent = edge.relation;
+        el.edges.appendChild(label);
+      });
+
+      graph.nodes.forEach((node) => {
+        const pos = positions.get(node.id);
+        const card = document.createElement("button");
+        card.type = "button";
+        const isSelected = node.id === state.selected;
+        const isConnected = connectedNodeIds.has(node.id);
+        card.className = `node-card ${node.kind}${isSelected ? " selected" : ""}${state.selected && !isConnected ? " dimmed" : ""}${!isSelected && isConnected ? " connected" : ""}`;
+        card.style.left = `${pos.x}px`;
+        card.style.top = `${pos.y}px`;
+        card.style.height = `${pos.h}px`;
+        card.addEventListener("click", () => {
+          state.selected = node.id;
+          render();
+        });
+
+        const kicker = document.createElement("div");
+        kicker.className = "node-kicker";
+        kicker.appendChild(badge(kindLabels[node.kind] || node.kind));
+        if (node.severity) kicker.appendChild(badge(node.severity, text(node.severity).toLowerCase()));
+        if (node.status) kicker.appendChild(badge(node.status));
+
+        const title = document.createElement("div");
+        title.className = "node-title";
+        appendHighlightedInline(title, node.title);
+
+        const subtitle = document.createElement("div");
+        subtitle.className = "node-subtitle";
+        appendHighlightedInline(subtitle, cardSubtitle(node));
+
+        card.append(kicker, title, subtitle);
+        el.nodes.appendChild(card);
+      });
+    }
+
+    function edgeKey(edge) {
+      return `${edge.source}->${edge.target}:${edge.relation}`;
+    }
+
+    function appendArrowMarker() {
+      const defs = document.createElementNS("http://www.w3.org/2000/svg", "defs");
+      const marker = document.createElementNS("http://www.w3.org/2000/svg", "marker");
+      marker.setAttribute("id", "arrow");
+      marker.setAttribute("viewBox", "0 0 10 10");
+      marker.setAttribute("refX", "9");
+      marker.setAttribute("refY", "5");
+      marker.setAttribute("markerWidth", "6");
+      marker.setAttribute("markerHeight", "6");
+      marker.setAttribute("orient", "auto-start-reverse");
+      const arrow = document.createElementNS("http://www.w3.org/2000/svg", "path");
+      arrow.setAttribute("d", "M 0 0 L 10 5 L 0 10 z");
+      arrow.setAttribute("fill", "#94a3b8");
+      marker.appendChild(arrow);
+      defs.appendChild(marker);
+      el.edges.appendChild(defs);
+    }
+
+    function renderStats(nodes) {
+      const count = (predicate) => nodes.filter(predicate).length;
+      const stats = [
+        ["Visible", nodes.length],
+        ["Active issues", count((node) => node.kind === "issue" && activeStatuses.has(text(node.status).toLowerCase()))],
+        ["P0/P1 issues", count((node) => node.kind === "issue" && ["P0", "P1"].includes(node.severity))],
+        ["Files", count((node) => node.kind === "file")]
+      ];
+      el.stats.innerHTML = "";
+      stats.forEach(([label, value]) => {
+        const item = document.createElement("div");
+        item.className = "stat";
+        item.innerHTML = `<strong>${value}</strong><span>${label}</span>`;
+        el.stats.appendChild(item);
+      });
+    }
+
+    function sortNodesForList(a, b) {
+      const aActive = a.kind === "issue" && activeStatuses.has(text(a.status).toLowerCase());
+      const bActive = b.kind === "issue" && activeStatuses.has(text(b.status).toLowerCase());
+      if (aActive !== bActive) return aActive ? -1 : 1;
+      const sevA = Object.prototype.hasOwnProperty.call(severityRank, a.severity) ? severityRank[a.severity] : 99;
+      const sevB = Object.prototype.hasOwnProperty.call(severityRank, b.severity) ? severityRank[b.severity] : 99;
+      if (sevA !== sevB) return sevA - sevB;
+      const laneA = Object.prototype.hasOwnProperty.call(lanes, a.kind) ? lanes[a.kind] : 9;
+      const laneB = Object.prototype.hasOwnProperty.call(lanes, b.kind) ? lanes[b.kind] : 9;
+      if (laneA !== laneB) return laneA - laneB;
+      return text(a.title).localeCompare(text(b.title));
+    }
+
+    function renderList(nodes) {
+      el.nodeList.innerHTML = "";
+      const listNodes = state.listSort === "severity" ? [...nodes].sort(sortNodesForList) : nodes;
+      listNodes.slice(0, 140).forEach((node) => {
+        const item = document.createElement("button");
+        item.type = "button";
+        item.className = node.id === state.selected ? "active" : "";
+        item.addEventListener("click", () => {
+          state.selected = node.id;
+          render();
+        });
+        const title = document.createElement("span");
+        title.className = "list-title";
+        title.textContent = node.title;
+        const subtitle = document.createElement("span");
+        subtitle.className = "list-subtitle";
+        subtitle.textContent = `${kindLabels[node.kind] || node.kind}${node.experiment ? " / " + node.experiment : ""}`;
+        item.append(title, subtitle);
+        el.nodeList.appendChild(item);
+      });
+    }
+
+    function renderDetail(node) {
+      el.detail.innerHTML = "";
+      if (!node) {
+        const empty = document.createElement("div");
+        empty.innerHTML = "<h1>Review Idea Graph</h1><p>No node selected.</p>";
+        el.detail.appendChild(empty);
+        return;
+      }
+      const title = document.createElement("h1");
+      appendHighlightedInline(title, node.title);
+      const badges = document.createElement("div");
+      badges.className = "badges";
+      badges.appendChild(badge(kindLabels[node.kind] || node.kind));
+      if (node.experiment) badges.appendChild(badge(node.experiment));
+      if (node.round) badges.appendChild(badge(node.round));
+      if (node.severity) badges.appendChild(badge(node.severity, text(node.severity).toLowerCase()));
+      if (node.status) badges.appendChild(badge(node.status));
+      el.detail.append(title, badges);
+
+      appendNumberHighlights(node);
+      if (node.subtitle) appendTextSection("Summary", node.subtitle);
+      if (node.body) appendTextSection(node.kind === "issue" ? "Evidence" : "Details", node.body);
+      if (node.kind === "round" && node.context_what_changed) appendMarkdownSection("What Changed", node.context_what_changed);
+      if (node.kind === "round" && node.context_evidence) appendMarkdownSection("Evidence", node.context_evidence);
+      if (node.path) appendPath(node);
+      appendFilePreview(node);
+      appendRelatedFiles(node);
+      appendMeta(node.meta || {});
+      appendConnections(node);
+    }
+
+    function appendTextSection(label, value) {
+      const heading = document.createElement("h2");
+      heading.textContent = label;
+      const body = document.createElement("p");
+      appendHighlightedInline(body, value);
+      el.detail.append(heading, body);
+    }
+
+    function appendMarkdownSection(label, value) {
+      const heading = document.createElement("h2");
+      heading.textContent = label;
+      const container = document.createElement("div");
+      container.className = "markdown-preview markdown-body";
+      container.innerHTML = markdownToHtml(text(value));
+      el.detail.append(heading, container);
+    }
+
+    function appendNumberHighlights(node) {
+      const numbers = notableNumbersForNode(node);
+      if (!numbers.length) return;
+      const heading = document.createElement("h2");
+      heading.textContent = "Numbers To Notice";
+      const strip = document.createElement("div");
+      strip.className = "metric-strip";
+      numbers.forEach((value) => {
+        const item = document.createElement("span");
+        item.className = metricClassName(value, "metric-chip");
+        item.textContent = value;
+        strip.appendChild(item);
+      });
+      el.detail.append(heading, strip);
+    }
+
+    function openHref(href) {
+      if (!href) return href;
+      return DATA.exportMode ? href : `viewer.html?f=${encodeURIComponent(href)}`;
+    }
+
+    function viewLabel() { return "View"; }
+
+    function appendPath(node) {
+      const path = node.path;
+      const href = node.href;
+      const heading = document.createElement("h2");
+      heading.textContent = "Path";
+      if (!href) {
+        const note = document.createElement("p");
+        note.className = "preview-note";
+        note.textContent = `${path} cannot be opened directly (glob, missing path, or generated reference).`;
+        el.detail.append(heading, note);
+        return;
+      }
+      const link = document.createElement("a");
+      link.className = "open-link";
+      link.href = openHref(href);
+      link.target = "_blank";
+      link.rel = "noopener";
+      link.textContent = `Open ${path}`;
+      el.detail.append(heading, link);
+    }
+
+    function appendFilePreview(node) {
+      if (!node.path || !["file", "report", "change", "run"].includes(node.kind)) return;
+      const preview = node.preview || {};
+      const heading = document.createElement("h2");
+      heading.textContent = preview.available ? `Preview (${preview.kind})` : "Preview";
+      el.detail.appendChild(heading);
+      if (!preview.available) {
+        const note = document.createElement("p");
+        note.className = "preview-note";
+        note.textContent = `No preview: ${preview.reason || "unsupported file type"}.`;
+        el.detail.appendChild(note);
+        return;
+      }
+      const container = document.createElement("div");
+      el.detail.appendChild(container);
+      renderFileContent(container, preview.text || "", isMarkdownPreview(node), preview.format || "");
+    }
+
+    function appendRelatedFiles(node) {
+      const files = DATA.edges
+        .filter((edge) => edge.source === node.id || edge.target === node.id)
+        .map((edge) => ({
+          edge,
+          node: nodesById.get(edge.source === node.id ? edge.target : edge.source)
+        }))
+        .filter((item) => item.node && ["file", "report"].includes(item.node.kind));
+      if (!files.length) return;
+      const heading = document.createElement("h2");
+      heading.textContent = node.kind === "change" ? "Changed Files" : "Linked Files";
+      const list = document.createElement("div");
+      list.className = "file-list";
+      files.slice(0, 40).forEach(({ edge, node: fileNode }) => {
+        const row = document.createElement("div");
+        row.className = "file-row";
+        const name = document.createElement("button");
+        name.type = "button";
+        name.className = "file-name";
+        name.textContent = `${edge.relation}: ${fileNode.path || fileNode.title}`;
+        name.addEventListener("click", () => {
+          state.selected = fileNode.id;
+          render();
+        });
+        row.appendChild(name);
+        if (fileNode.href) {
+          const link = document.createElement("a");
+          link.className = "mini-link";
+          link.href = openHref(fileNode.href);
+          link.target = "_blank";
+          link.rel = "noopener";
+          link.textContent = viewLabel();
+          row.appendChild(link);
+        }
+        list.appendChild(row);
+      });
+      el.detail.append(heading, list);
+    }
+
+    function appendMeta(meta) {
+      const entries = Object.entries(meta).filter(([, value]) => value);
+      if (!entries.length) return;
+      const heading = document.createElement("h2");
+      heading.textContent = "Metadata";
+      el.detail.appendChild(heading);
+      entries.forEach(([key, value]) => {
+        const row = document.createElement("div");
+        row.className = "kv";
+        const k = document.createElement("span");
+        k.textContent = key;
+        const v = document.createElement("span");
+        appendHighlightedInline(v, value);
+        row.append(k, v);
+        el.detail.appendChild(row);
+      });
+    }
+
+    function appendConnections(node) {
+      const connected = DATA.edges
+        .filter((edge) => edge.source === node.id || edge.target === node.id)
+        .map((edge) => ({
+          edge,
+          node: nodesById.get(edge.source === node.id ? edge.target : edge.source)
+        }))
+        .filter((item) => item.node);
+      if (!connected.length) return;
+      const heading = document.createElement("h2");
+      heading.textContent = "Connections";
+      el.detail.appendChild(heading);
+      connected.slice(0, 24).forEach(({ edge, node: other }) => {
+        const row = document.createElement("div");
+        row.className = "connection-row";
+        row.style.marginBottom = "6px";
+        const jump = document.createElement("button");
+        jump.type = "button";
+        jump.className = "btn";
+        jump.style.width = "100%";
+        jump.style.height = "auto";
+        jump.style.padding = "8px 10px";
+        jump.style.textAlign = "left";
+        jump.textContent = `${edge.relation}: ${other.title}`;
+        jump.addEventListener("click", () => {
+          state.selected = other.id;
+          render();
+        });
+        row.appendChild(jump);
+        if (other.href) {
+          const link = document.createElement("a");
+          link.className = "mini-link";
+          link.href = openHref(other.href);
+          link.target = "_blank";
+          link.rel = "noopener";
+          link.textContent = viewLabel(other.href);
+          row.appendChild(link);
+        }
+        el.detail.appendChild(row);
+      });
+    }
+
+    function initControls() {
+      el.experimentSelect.innerHTML = '<option value="all">All experiments</option>' +
+        DATA.experiments.map((name) => `<option value="${name}">${name}</option>`).join("");
+      DATA.kindOrder.forEach((kind) => {
+        const label = document.createElement("label");
+        label.className = "check";
+        const input = document.createElement("input");
+        input.type = "checkbox";
+        input.dataset.kind = kind;
+        input.checked = state.kinds.has(kind);
+        input.addEventListener("change", () => {
+          if (input.checked) state.kinds.add(kind);
+          else state.kinds.delete(kind);
+          render();
+        });
+        const span = document.createElement("span");
+        span.textContent = kindLabels[kind] || kind;
+        label.append(input, span);
+        el.kindChecks.appendChild(label);
+      });
+      el.search.addEventListener("input", () => {
+        state.query = el.search.value.trim().toLowerCase();
+        render();
+      });
+      el.experimentSelect.addEventListener("change", () => {
+        state.experiment = el.experimentSelect.value;
+        render();
+      });
+      el.statusSelect.addEventListener("change", () => {
+        state.status = el.statusSelect.value;
+        render();
+      });
+      document.getElementById("zoomIn").addEventListener("click", () => {
+        state.zoom = Math.min(1.8, state.zoom + .1);
+        render();
+      });
+      document.getElementById("zoomOut").addEventListener("click", () => {
+        state.zoom = Math.max(.35, state.zoom - .1);
+        render();
+      });
+      document.getElementById("resetBtn").addEventListener("click", () => {
+        state.query = "";
+        state.experiment = "all";
+        state.status = "active";
+        state.kinds = new Set(DATA.kindOrder);
+        state.zoom = 1;
+        state.selected = "";
+        state.layout = "graph";
+        state.listSort = "default";
+        state.highSevOnly = false;
+        el.search.value = "";
+        el.experimentSelect.value = "all";
+        el.statusSelect.value = "active";
+        el.graphBtn.classList.add("active");
+        el.timelineBtn.classList.remove("active");
+        el.highSevBtn.classList.remove("active");
+        el.listSortBtn.textContent = "By Severity";
+        el.listSortBtn.classList.remove("active");
+        [...el.kindChecks.querySelectorAll("input")].forEach((input) => {
+          input.checked = state.kinds.has(input.dataset.kind);
+        });
+        render();
+      });
+      document.getElementById("fitBtn").addEventListener("click", fitGraph);
+      el.graphBtn.addEventListener("click", () => {
+        state.layout = "graph";
+        el.graphBtn.classList.add("active");
+        el.timelineBtn.classList.remove("active");
+        render();
+      });
+      el.timelineBtn.addEventListener("click", () => {
+        state.layout = "timeline";
+        el.timelineBtn.classList.add("active");
+        el.graphBtn.classList.remove("active");
+        render();
+      });
+      el.highSevBtn.addEventListener("click", () => {
+        state.highSevOnly = !state.highSevOnly;
+        el.highSevBtn.classList.toggle("active", state.highSevOnly);
+        render();
+      });
+      el.listSortBtn.addEventListener("click", () => {
+        state.listSort = state.listSort === "severity" ? "default" : "severity";
+        el.listSortBtn.textContent = state.listSort === "severity" ? "By Default" : "By Severity";
+        el.listSortBtn.classList.toggle("active", state.listSort === "severity");
+        render();
+      });
+    }
+
+    function fitGraph() {
+      const graph = visibleData();
+      const positions = layoutNodes(graph.nodes);
+      const width = Math.max(1660, Math.max(0, ...[...positions.values()].map((p) => p.x + p.w + 40)));
+      state.zoom = Math.max(.35, Math.min(1, (el.viewport.clientWidth - 36) / width));
+      render();
+    }
+
+    initControls();
+    fitGraph();
+  </script>
+</body>
+</html>

@@ -1,0 +1,10 @@
+{
+  "project_name": "demo-soliton-research",
+  "reviews_dir": "reports/reviews",
+  "tracker_file": "reports/reviews/TRACKER.md",
+  "readme_file": "reports/reviews/README.md",
+  "changelog_file": "CHANGELOG.md",
+  "runs_dir": "runs",
+  "configs_dir": "configs",
+  "snapshots_dir": "reports/reviews/snapshots"
+}
