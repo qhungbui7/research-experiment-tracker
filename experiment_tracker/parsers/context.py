@@ -98,20 +98,33 @@ def parse_context_file(path: Path, reviews_dir_prefix: str = "reports/reviews") 
     )
 
 
-def parse_all_contexts(reviews_dir: Path, reviews_dir_prefix: str = "reports/reviews") -> dict[tuple[str, str], RoundContext]:
-    """Walk experiments/*/round_*/CONTEXT.md and index by (experiment, round_name)."""
+def parse_all_contexts(reviews_dir: Path, reviews_dir_prefix: str = "reports/reviews", default_experiment: str = "amt") -> dict[tuple[str, str], RoundContext]:
+    """Walk experiments/*/round_*/CONTEXT.md and round_*/CONTEXT.md, indexing by (experiment, round_name)."""
     result: dict[tuple[str, str], RoundContext] = {}
-    experiments_dir = reviews_dir / "experiments"
-    if not experiments_dir.is_dir():
+    if not reviews_dir.is_dir():
         return result
-    for exp_dir in sorted(experiments_dir.iterdir()):
-        if not exp_dir.is_dir():
-            continue
-        for round_dir in sorted(exp_dir.iterdir()):
-            if not round_dir.is_dir():
+
+    # 1. Structure with experiments/<exp>/<round>/CONTEXT.md
+    experiments_dir = reviews_dir / "experiments"
+    if experiments_dir.is_dir():
+        for exp_dir in sorted(experiments_dir.iterdir()):
+            if not exp_dir.is_dir():
                 continue
+            for round_dir in sorted(exp_dir.iterdir()):
+                if not round_dir.is_dir():
+                    continue
+                context_path = round_dir / "CONTEXT.md"
+                if context_path.exists():
+                    ctx = parse_context_file(context_path, reviews_dir_prefix)
+                    result[(ctx.experiment, ctx.round_name)] = ctx
+
+    # 2. Flat structure with round_*/CONTEXT.md directly in reviews_dir
+    for round_dir in sorted(reviews_dir.glob("round_*")):
+        if round_dir.is_dir():
             context_path = round_dir / "CONTEXT.md"
             if context_path.exists():
                 ctx = parse_context_file(context_path, reviews_dir_prefix)
-                result[(ctx.experiment, ctx.round_name)] = ctx
+                exp_key = ctx.experiment if ctx.experiment and not ctx.experiment.startswith("round_") else default_experiment
+                result[(exp_key, ctx.round_name)] = ctx
+
     return result

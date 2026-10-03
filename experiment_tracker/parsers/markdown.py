@@ -87,11 +87,13 @@ def find_table(
     return []
 
 
-def parse_reviews_readme(path: Path) -> tuple[list[Experiment], list[Round]]:
+def parse_reviews_readme(path: Path, default_experiment: str = "amt") -> tuple[list[Experiment], list[Round]]:
     """Parse the review index into experiment-level and round-level records."""
     tables = parse_markdown_tables(path)
     experiment_rows = find_table(tables, {"Experiment", "Subject", "Evidence base", "Rounds"})
     round_rows = find_table(tables, {"Experiment", "Round", "Date", "Focus", "Trigger", "Report"})
+    if not round_rows:
+        round_rows = find_table(tables, {"Round", "Date", "Focus"})
 
     experiments = [
         Experiment(
@@ -105,24 +107,47 @@ def parse_reviews_readme(path: Path) -> tuple[list[Experiment], list[Round]]:
         if row.get("Experiment", "").strip()
     ]
 
-    rounds = [
-        Round(
-            experiment=row["Experiment"].strip(),
-            round_name=row["Round"].strip(),
-            date=row["Date"].strip(),
-            focus=row["Focus"].strip(),
-            trigger=row["Trigger"].strip(),
-            report=row["Report"].strip(),
-            open_issues=row.get("Open issues after round", row.get("Open issues", "")).strip(),
+    rounds = []
+    for row in round_rows:
+        raw_rnd = row.get("Round", "").strip()
+        if not raw_rnd:
+            continue
+        exp = row.get("Experiment", "").strip() or default_experiment
+        if raw_rnd.isdigit():
+            rnd_name = f"round_{raw_rnd.zfill(3)}"
+        elif not raw_rnd.startswith("round_"):
+            rnd_name = f"round_{raw_rnd}"
+        else:
+            rnd_name = raw_rnd
+
+        rep = row.get("Report", "").strip() or f"reports/reviews/{rnd_name}"
+        rounds.append(
+            Round(
+                experiment=exp,
+                round_name=rnd_name,
+                date=row.get("Date", "").strip(),
+                focus=row.get("Focus", "").strip(),
+                trigger=row.get("Trigger", row.get("Focus", "")).strip(),
+                report=rep,
+                open_issues=row.get("Open issues after round", row.get("Open issues", "")).strip(),
+            )
         )
-        for row in round_rows
-        if row.get("Experiment", "").strip() and row.get("Round", "").strip()
-    ]
+
+    if not experiments and rounds:
+        exp_name = rounds[0].experiment
+        experiments = [
+            Experiment(
+                experiment=exp_name,
+                subject=f"{exp_name.upper()} Research Investigation",
+                evidence_base="reports/reviews",
+                rounds=f"{rounds[0].round_name}..{rounds[-1].round_name}",
+            )
+        ]
 
     return experiments, rounds
 
 
-def parse_tracker(path: Path) -> list[Issue]:
+def parse_tracker(path: Path, default_experiment: str = "amt") -> list[Issue]:
     """Parse open, resolved, and historical issues from TRACKER.md."""
     if not path.exists():
         return []
@@ -165,14 +190,17 @@ def parse_tracker(path: Path) -> list[Issue]:
             issue_id = row.get("ID", "").strip()
             if issue_id and re.match(r"^I-\d{3,}", issue_id):
                 found = row.get("Found", "").strip()
-                # Parse experiment and round if slash-separated
+                m_r = re.match(r"^R(\d{3,})$", found, re.IGNORECASE)
                 if "/" in found:
                     parts = [p.strip() for p in found.split("/") if p.strip()]
-                    exp = next((p for p in parts if p.startswith("experiment_")), "")
+                    exp = next((p for p in parts if p.startswith("experiment_")), default_experiment)
                     rnd = next((p for p in parts if p.startswith("round_")), parts[-1])
+                elif m_r:
+                    exp = default_experiment
+                    rnd = f"round_{m_r.group(1)}"
                 else:
-                    exp = ""
-                    rnd = found
+                    exp = default_experiment
+                    rnd = found if found.startswith("round_") else f"round_{found}"
 
                 evidence = row.get("Evidence", row.get("Notes", "")).strip()
                 next_step = row.get("Next Step", row.get("Next step", row.get("Resolved", ""))).strip()

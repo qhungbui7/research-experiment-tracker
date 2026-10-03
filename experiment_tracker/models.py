@@ -6,10 +6,12 @@ from pathlib import Path
 from typing import Any
 
 
+OPEN_STATUSES = {"open", "partial", "pending"}
+VALID_SEVERITIES = ["P0", "P1", "P2", "P3", "P4"]
+
+
 @dataclass(frozen=True)
 class Experiment:
-    """One reviewed evidence base, research direction, or experiment family."""
-
     experiment: str
     subject: str
     evidence_base: str

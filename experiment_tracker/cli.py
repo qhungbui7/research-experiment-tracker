@@ -8,6 +8,7 @@ from pathlib import Path
 from .builder import build_graph, build_html_data
 from .config import ProjectConfig
 from .exporters import render_html, write_html_export, write_output
+from .models import OPEN_STATUSES
 from .parsers.context import parse_all_contexts
 from .parsers.git import load_commits
 from .parsers.markdown import parse_changelog, parse_reviews_readme, parse_tracker
