@@ -7,6 +7,10 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <!-- KaTeX for Scientific & Academic Mathematical Typesetting (W&B / OpenReview style) -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
   <style>
     :root {
       --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
@@ -904,13 +908,82 @@
       color: var(--accent);
     }
     .markdown-body pre {
-      background: #020617;
+      background: #060913;
       color: #e2e8f0;
-      padding: 14px;
+      padding: 14px 18px;
       border-radius: var(--radius-md);
       overflow-x: auto;
       margin: 14px 0;
       border: 1px solid var(--border);
+    }
+    .markdown-body pre code {
+      background: transparent !important;
+      padding: 0 !important;
+      color: #e2e8f0 !important;
+      border: none !important;
+      border-radius: 0 !important;
+      font-family: var(--font-mono);
+      font-size: 12px;
+      line-height: 1.6;
+      display: block;
+      white-space: pre;
+    }
+    .code-block-wrapper {
+      margin: 16px 0;
+      border-radius: var(--radius-md);
+      border: 1px solid var(--border);
+      overflow: hidden;
+      background: #060913;
+    }
+    .code-block-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: var(--bg-surface-raised);
+      padding: 6px 14px;
+      font-size: 11px;
+      font-family: var(--font-mono);
+      color: var(--text-dim);
+      border-bottom: 1px solid var(--border);
+    }
+    .code-block-wrapper pre {
+      margin: 0 !important;
+      border: none !important;
+      border-radius: 0 !important;
+    }
+    .code-copy-btn {
+      background: transparent;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 2px 8px;
+      font-size: 11px;
+      color: var(--text-muted);
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      transition: all 0.15s;
+    }
+    .code-copy-btn:hover {
+      background: var(--bg-surface-hover);
+      color: var(--text);
+      border-color: var(--border-strong);
+    }
+    .code-copy-btn.copied {
+      color: var(--success);
+      border-color: var(--success);
+    }
+    .ascii-diagram {
+      background: #050811 !important;
+      border: 1px solid var(--border-strong) !important;
+      color: #cbd5e1 !important;
+      font-family: var(--font-mono) !important;
+      font-size: 11.5px !important;
+      line-height: 1.5 !important;
+      padding: 14px 18px !important;
+      border-radius: var(--radius-md) !important;
+      white-space: pre !important;
+      overflow-x: auto !important;
     }
     .markdown-body table {
       width: 100%;
@@ -943,15 +1016,272 @@
       color: var(--accent-hover);
       text-shadow: 0 0 8px var(--accent-glow);
     }
-    .math-expr {
+
+    /* Academic & KaTeX Mathematical Typesetting */
+    .katex-display {
+      margin: 16px 0 !important;
+      overflow-x: auto;
+      overflow-y: hidden;
+      padding: 8px 0;
+    }
+    .math-block {
+      margin: 18px 0;
+      padding: 14px 20px;
+      background: rgba(15, 23, 42, 0.5);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      overflow-x: auto;
+      text-align: center;
+      font-size: 1.05em;
+    }
+    .math-inline, .katex-math, .katex-inline-math {
+      font-family: 'KaTeX_Math', 'Cambria Math', 'STIX Two Math', 'Times New Roman', serif;
+      font-style: italic;
+      padding: 0 2px;
+      color: var(--text);
+      font-size: 1.02em;
+    }
+    .math-fallback {
+      font-family: 'KaTeX_Math', 'Cambria Math', 'STIX Two Math', 'Times New Roman', serif;
+      font-style: italic;
+      color: #cbd5e1;
+      padding: 0 2px;
+    }
+    .math-fallback-block {
+      display: block;
+      margin: 14px 0;
+      padding: 12px 18px;
+      background: rgba(15, 23, 42, 0.6);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      font-family: 'KaTeX_Math', 'Cambria Math', 'STIX Two Math', 'Times New Roman', serif;
+      font-style: italic;
+      font-size: 1.06em;
+      text-align: center;
+      color: #93c5fd;
+      overflow-x: auto;
+    }
+
+    /* Document Layout with Sticky Table of Contents (OpenReview / Papers With Code style) */
+    .doc-body-with-toc {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 240px;
+      gap: 24px;
+      align-items: start;
+    }
+    @media (max-width: 1100px) {
+      .doc-body-with-toc {
+        grid-template-columns: 1fr;
+      }
+      .doc-toc-panel {
+        display: none !important;
+      }
+    }
+    .doc-toc-panel {
+      position: sticky;
+      top: 80px;
+      max-height: calc(100vh - 120px);
+      overflow-y: auto;
+      padding: 14px;
+      background: var(--bg-surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      font-size: 12px;
+    }
+    .doc-toc-header {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-dim);
+      margin-bottom: 10px;
+      padding-bottom: 6px;
+      border-bottom: 1px solid var(--border);
+    }
+    .doc-toc-list {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .doc-toc-link {
+      color: var(--text-muted);
+      text-decoration: none;
+      line-height: 1.4;
+      display: block;
+      padding: 3px 6px;
+      border-radius: 4px;
+      transition: all 0.15s;
+    }
+    .doc-toc-link:hover {
+      color: var(--accent);
+      background: var(--bg-surface-raised);
+    }
+    .doc-toc-link.level-h1 { font-weight: 600; color: var(--text); }
+    .doc-toc-link.level-h2 { padding-left: 12px; }
+    .doc-toc-link.level-h3 { padding-left: 20px; font-size: 11px; color: var(--text-dim); }
+    .doc-toc-link.active {
+      color: var(--accent);
+      background: rgba(56, 189, 248, 0.1);
+      font-weight: 600;
+    }
+
+    /* Run Comparer (W&B / MLflow style) */
+    .compare-view-container {
+      padding: 24px;
+      max-width: 1400px;
+      margin: 0 auto;
+    }
+    .compare-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+      margin-top: 20px;
+    }
+    @media (max-width: 850px) {
+      .compare-grid { grid-template-columns: 1fr; }
+    }
+    .compare-card {
+      background: var(--bg-surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 20px;
+    }
+    .compare-card-header {
+      padding-bottom: 14px;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 16px;
+    }
+    .compare-section {
+      margin-bottom: 18px;
+    }
+    .compare-section-title {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-dim);
+      margin-bottom: 8px;
+    }
+    .diff-badge-wrap {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+    .diff-badge {
       font-family: var(--font-mono);
-      font-size: 0.92em;
-      color: #818cf8;
-      background: rgba(99, 102, 241, 0.12);
+      font-size: 11px;
+      padding: 3px 8px;
+      border-radius: 4px;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .diff-badge.added {
+      background: rgba(16, 185, 129, 0.12);
+      color: var(--success);
+      border: 1px solid rgba(16, 185, 129, 0.25);
+    }
+    .diff-badge.removed {
+      background: rgba(239, 68, 68, 0.12);
+      color: var(--danger);
+      border: 1px solid rgba(239, 68, 68, 0.25);
+    }
+    .diff-badge.common {
+      background: rgba(56, 189, 248, 0.1);
+      color: var(--accent);
+      border: 1px solid rgba(56, 189, 248, 0.2);
+    }
+
+    /* Command Palette Modal (W&B / Linear style) */
+    .command-palette-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.7);
+      backdrop-filter: blur(8px);
+      z-index: 2000;
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+      padding-top: 15vh;
+    }
+    .command-palette-modal {
+      width: 100%;
+      max-width: 620px;
+      background: var(--bg-surface);
+      border: 1px solid var(--border-strong);
+      border-radius: var(--radius-lg);
+      box-shadow: 0 24px 48px rgba(0, 0, 0, 0.6);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+    .palette-input-wrap {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--border);
+      background: var(--bg-surface-raised);
+    }
+    .palette-input-wrap input {
+      flex: 1;
+      background: transparent;
+      border: none;
+      color: var(--text);
+      font-size: 15px;
+      outline: none;
+    }
+    .palette-key-hint {
+      font-size: 10px;
+      font-family: var(--font-mono);
+      background: var(--bg-surface);
+      border: 1px solid var(--border);
       padding: 2px 6px;
       border-radius: 4px;
-      border: 1px solid rgba(99, 102, 241, 0.25);
-      font-weight: 600;
+      color: var(--text-dim);
+    }
+    .palette-results {
+      max-height: 380px;
+      overflow-y: auto;
+      padding: 8px;
+    }
+    .palette-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 14px;
+      border-radius: var(--radius-md);
+      cursor: pointer;
+      transition: background 0.1s;
+    }
+    .palette-item:hover, .palette-item.active {
+      background: var(--bg-surface-hover);
+    }
+    .palette-item-left {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      min-width: 0;
+    }
+    .palette-item-title {
+      font-size: 13.5px;
+      color: var(--text);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .palette-item-subtitle {
+      font-size: 11.5px;
+      color: var(--text-dim);
+    }
+    .palette-item-type {
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      padding: 2px 6px;
+      border-radius: 4px;
+      background: var(--bg-surface-raised);
+      color: var(--text-muted);
     }
     .callout {
       margin: 16px 0;
@@ -1272,6 +1602,10 @@
         <span>Documents</span>
         <span class="tab-badge" id="tabDocCount">0</span>
       </button>
+      <button class="nav-tab" data-tab="compare">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 3h5v5"/><path d="M4 20L21 3"/><path d="M21 16v5h-5"/><path d="M15 15l6 6"/><path d="M4 4l5 5"/></svg>
+        <span>Compare</span>
+      </button>
     </nav>
 
     <!-- Header Controls -->
@@ -1519,13 +1853,74 @@
         </aside>
         <section class="docs-content-area" id="docsContentArea">
           <div class="doc-reader-card">
-            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; border-bottom: 1px solid var(--border); padding-bottom: 12px;">
-              <span id="docPathLabel" style="font-family: var(--font-mono); font-size: 12px; color: var(--accent);"></span>
-              <button class="btn-icon" id="copyDocPathBtn" title="Copy file path" style="width: auto; padding: 0 8px; font-size: 11px;">Copy Path</button>
+            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; border-bottom: 1px solid var(--border); padding-bottom: 12px; flex-wrap: wrap; gap: 8px;">
+              <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+                <span id="docPathLabel" style="font-family: var(--font-mono); font-size: 12px; color: var(--accent);"></span>
+                <span id="docMetaInfo" style="font-size: 11.5px; color: var(--text-dim); background: var(--bg-surface-raised); padding: 2px 8px; border-radius: 4px; border: 1px solid var(--border);"></span>
+              </div>
+              <div style="display: flex; gap: 8px;">
+                <button class="btn-icon" id="toggleTocBtn" title="Toggle Table of Contents" style="width: auto; padding: 0 10px; font-size: 11px;">📑 Outline</button>
+                <button class="btn-icon" id="copyDocPathBtn" title="Copy file path" style="width: auto; padding: 0 8px; font-size: 11px;">Copy Path</button>
+              </div>
             </div>
-            <div class="markdown-body" id="docRenderArea"></div>
+            <div class="doc-body-with-toc">
+              <div class="markdown-body" id="docRenderArea"></div>
+              <aside class="doc-toc-panel" id="docTocPanel">
+                <div class="doc-toc-header">On This Page</div>
+                <nav class="doc-toc-list" id="docTocList"></nav>
+              </aside>
+            </div>
           </div>
         </section>
+      </div>
+    </div>
+
+    <!-- ========================================================
+         VIEW 5: RUN & ROUND COMPARER (W&B / MLFLOW STYLE)
+         ======================================================== -->
+    <div id="compareView" class="view-panel">
+      <div class="compare-view-container">
+        <div class="hero-banner" style="margin-bottom: 24px;">
+          <div class="hero-kicker">
+            <span class="live-dot" style="background: var(--accent);"></span>
+            <span style="font-size: 12px; font-weight: 700; color: var(--accent); text-transform: uppercase;">Run Comparison & Lineage Diff</span>
+          </div>
+          <h1 class="hero-title">Side-by-Side Run & Round Comparator</h1>
+          <p class="hero-desc">
+            Compare configurations, empirical benchmark returns, touched files, and issue resolutions across any two research rounds or experimental baselines.
+          </p>
+          <div style="display: flex; gap: 16px; margin-top: 18px; flex-wrap: wrap; align-items: center;">
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <label style="font-size: 12px; font-weight: 600; color: var(--text-muted);">Baseline (A):</label>
+              <select id="compareSelectA" class="form-select" style="min-width: 240px; background: var(--bg-surface-raised); color: var(--text); border: 1px solid var(--border); padding: 6px 10px; border-radius: 6px; font-size: 12px;"></select>
+            </div>
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <label style="font-size: 12px; font-weight: 600; color: var(--text-muted);">Comparison (B):</label>
+              <select id="compareSelectB" class="form-select" style="min-width: 240px; background: var(--bg-surface-raised); color: var(--text); border: 1px solid var(--border); padding: 6px 10px; border-radius: 6px; font-size: 12px;"></select>
+            </div>
+            <button class="btn-icon" id="btnSwapCompare" style="width: auto; padding: 6px 12px; font-size: 12px; background: var(--bg-surface-raised); border: 1px solid var(--border);" title="Swap A and B">⇄ Swap</button>
+            <div class="filter-pills" id="comparePresets" style="margin: 0;">
+              <button class="filter-pill active" data-preset="latest">Latest 2 Rounds</button>
+              <button class="filter-pill" data-preset="first-last">First vs Latest</button>
+            </div>
+          </div>
+        </div>
+
+        <div id="compareResultsContainer">
+          <!-- Populated dynamically by renderRunComparer() -->
+        </div>
+      </div>
+    </div>
+
+    <!-- Command Palette Modal (W&B / Linear style - Press '/' or 'Cmd+K') -->
+    <div class="command-palette-backdrop" id="commandPalette" style="display: none;">
+      <div class="command-palette-modal">
+        <div class="palette-input-wrap">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          <input type="text" id="paletteSearchInput" placeholder="Search directions, issues, documents, rounds, or files... (Esc to close)" autocomplete="off">
+          <span class="palette-key-hint">ESC</span>
+        </div>
+        <div class="palette-results" id="paletteResults"></div>
       </div>
     </div>
 
@@ -1598,6 +1993,8 @@
       initSearch();
       initDirectionsFilter();
       initDrawerControls();
+      initRunComparer();
+      initCommandPalette();
       
       // Populate Views
       renderOverview();
@@ -1660,6 +2057,9 @@
 
       if (tabName === "graph") {
         setTimeout(layoutGraph, 50);
+      }
+      if (tabName === "compare") {
+        renderRunComparer();
       }
     }
 
@@ -2617,6 +3017,58 @@
 
       const renderArea = document.getElementById("docRenderArea");
       renderArea.innerHTML = simpleMarkdownRender(doc.content || "");
+      buildDocumentToc();
+      applyMathRendering(renderArea);
+    }
+
+    function buildDocumentToc() {
+      const renderArea = document.getElementById("docRenderArea");
+      const tocList = document.getElementById("docTocList");
+      const tocPanel = document.getElementById("docTocPanel");
+      if (!renderArea || !tocList) return;
+
+      tocList.innerHTML = "";
+      const headings = renderArea.querySelectorAll("h1, h2, h3");
+      if (!headings.length) {
+        if (tocPanel) tocPanel.style.display = "none";
+        return;
+      }
+      if (tocPanel) tocPanel.style.display = "block";
+
+      headings.forEach((h, idx) => {
+        const id = "docHeading_" + idx;
+        h.id = id;
+        const item = document.createElement("a");
+        item.href = "javascript:void(0)";
+        item.className = `doc-toc-link level-${h.tagName.toLowerCase()}`;
+        item.textContent = h.textContent.replace(/^[#\s]+/, "");
+        item.onclick = (e) => {
+          e.preventDefault();
+          h.scrollIntoView({ behavior: "smooth", block: "start" });
+          document.querySelectorAll(".doc-toc-link").forEach(l => l.classList.remove("active"));
+          item.classList.add("active");
+        };
+        tocList.appendChild(item);
+      });
+
+      // Word count and reading time
+      const text = renderArea.innerText || "";
+      const words = text.trim().split(/\s+/).filter(Boolean).length;
+      const readMin = Math.max(1, Math.round(words / 220));
+      const metaEl = document.getElementById("docMetaInfo");
+      if (metaEl) {
+        metaEl.textContent = `📖 ${readMin} min read · ${words.toLocaleString()} words`;
+      }
+
+      const toggleBtn = document.getElementById("toggleTocBtn");
+      if (toggleBtn) {
+        toggleBtn.onclick = () => {
+          if (tocPanel) {
+            const isHidden = tocPanel.style.display === "none";
+            tocPanel.style.display = isHidden ? "block" : "none";
+          }
+        };
+      }
     }
 
     // -------------------------------------------------------------
@@ -2625,6 +3077,12 @@
     function formatInline(text) {
       if (!text) return "";
       let s = escapeHtml(text);
+
+      // Unescape <br> tags so multi-line table cells and notes work
+      s = s.replace(/&lt;br\s*\/?&gt;/gi, '<br>');
+
+      // Convert LaTeX \pm to ±
+      s = s.replace(/\\pm\b/g, '±');
 
       // Bold + Italic: ***text*** or ___text___
       s = s.replace(/(\*\*\*|___)(.+?)\1/g, '<strong><em>$2</em></strong>');
@@ -2639,8 +3097,10 @@
       // Inline code: `code`
       s = s.replace(/`([^`\n]+?)`/g, '<code>$1</code>');
 
-      // Math expressions: $...$
-      s = s.replace(/(^|[^\\])\$([^\$\n]+?)\$/g, '$1<span class="math-expr">$2</span>');
+      // Math expressions: $...$ (Must not match $$ or currency with spaces)
+      s = s.replace(/(^|[^\\])\$([^\$\s](?:[^\$]*?[^\$\s])?)\$/g, (m, p1, p2) => {
+        return p1 + `<span class="katex-inline-math" data-math="${escapeHtml(p2)}">$${p2}$</span>`;
+      });
 
       // Markdown links: [label](target)
       s = s.replace(/\[([^\]\n]+)\]\(([^)\n]+)\)/g, (match, label, target) => {
@@ -2737,6 +3197,37 @@
         const line = lines[i];
         const trimmed = line.trim();
 
+        // 0. Display Math Block: $$ ... $$
+        if (trimmed.startsWith("$$")) {
+          const mathLines = [];
+          if (trimmed === "$$") {
+            i++;
+            while (i < lines.length && lines[i].trim() !== "$$") {
+              mathLines.push(lines[i]);
+              i++;
+            }
+            i++; // skip closing $$
+          } else if (trimmed.endsWith("$$") && trimmed.length > 2) {
+            mathLines.push(trimmed.slice(2, -2).trim());
+            i++;
+          } else {
+            mathLines.push(trimmed.slice(2));
+            i++;
+            while (i < lines.length && !lines[i].trim().endsWith("$$")) {
+              mathLines.push(lines[i]);
+              i++;
+            }
+            if (i < lines.length) {
+              const lastLine = lines[i].trim();
+              mathLines.push(lastLine.slice(0, -2));
+              i++;
+            }
+          }
+          const mathContent = mathLines.join("\n");
+          html += `<div class="math-block" data-math="${escapeHtml(mathContent)}"><span class="katex-display-math">$$${mathContent}$$</span></div>`;
+          continue;
+        }
+
         // 1. Fenced Code Block
         if (trimmed.startsWith("```")) {
           const lang = trimmed.slice(3).trim();
@@ -2747,7 +3238,20 @@
             i++;
           }
           i++; // skip closing ```
-          html += `<pre><code class="lang-${escapeHtml(lang)}">${escapeHtml(codeLines.join("\n"))}</code></pre>`;
+          const codeText = codeLines.join("\n");
+          const blockId = "codeBlock_" + Math.random().toString(36).substr(2, 9);
+          html += `
+            <div class="code-block-wrapper">
+              <div class="code-block-header">
+                <span class="code-lang-label">${escapeHtml(lang || 'code / diagram')}</span>
+                <button class="code-copy-btn" onclick="copyCodeFromBlock('${blockId}', this)">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                  <span>Copy</span>
+                </button>
+              </div>
+              <pre><code id="${blockId}" class="lang-${escapeHtml(lang)}">${escapeHtml(codeText)}</code></pre>
+            </div>
+          `;
           continue;
         }
 
@@ -2851,6 +3355,7 @@
           !lines[i].trim().startsWith("#") &&
           !lines[i].trim().startsWith(">") &&
           !lines[i].trim().startsWith("```") &&
+          !lines[i].trim().startsWith("$$") &&
           !(lines[i].trim().startsWith("|") && lines[i].trim().endsWith("|")) &&
           !/^[-*+]\s+/.test(lines[i].trim()) &&
           !/^\d+\.\s+/.test(lines[i].trim()) &&
@@ -2869,6 +3374,15 @@
 
     function renderMarkdownTable(rows) {
       if (rows.length < 2) return "";
+
+      // Strictly verify rows[1] is a markdown table separator: |:---|:---| or |--|--|
+      const separatorRow = rows[1].trim();
+      const isTableSeparator = /^\|?\s*:?-+:?\s*(\|\s*:?-+:?\s*)+\|?$/.test(separatorRow);
+      if (!isTableSeparator) {
+        // This is an ASCII diagram or box drawing, NOT a markdown table!
+        return `<pre class="ascii-diagram"><code>${escapeHtml(rows.join("\n"))}</code></pre>`;
+      }
+
       let html = '<div class="table-scroll-wrapper"><table class="data-table markdown-table"><thead><tr>';
       
       const headerCells = rows[0].split("|").slice(1, -1);
@@ -2891,6 +3405,412 @@
 
       html += '</tbody></table></div>';
       return html;
+    }
+
+    // -------------------------------------------------------------
+    // KaTeX & Math Unicode Fallback Engine
+    // -------------------------------------------------------------
+    function applyMathRendering(container) {
+      if (!container) return;
+
+      if (typeof renderMathInElement === "function") {
+        try {
+          renderMathInElement(container, {
+            delimiters: [
+              { left: "$$", right: "$$", display: true },
+              { left: "$", right: "$", display: false },
+              { left: "\\(", right: "\\)", display: false },
+              { left: "\\[", right: "\\]", display: true }
+            ],
+            ignoredTags: ["script", "noscript", "style", "textarea", "pre", "code"],
+            throwOnError: false
+          });
+          return;
+        } catch (err) {
+          console.warn("KaTeX render error, using fallback math formatter:", err);
+        }
+      }
+
+      // High-Fidelity Unicode Math Fallback
+      container.querySelectorAll(".katex-display-math, .katex-inline-math, .math-block").forEach(el => {
+        if (el.dataset.mathRendered) return;
+        el.dataset.mathRendered = "true";
+        const raw = el.dataset.math || el.textContent.replace(/^\$+|\$+$/g, "");
+        const formatted = formatMathUnicode(raw);
+        if (el.classList.contains("katex-display-math") || el.classList.contains("math-block")) {
+          el.innerHTML = `<div class="math-fallback-block">${formatted}</div>`;
+        } else {
+          el.innerHTML = `<span class="math-fallback">${formatted}</span>`;
+        }
+      });
+    }
+
+    function formatMathUnicode(str) {
+      if (!str) return "";
+      let s = str;
+      s = s.replace(/\\inf\b/g, "inf");
+      s = s.replace(/\\sup\b/g, "sup");
+      s = s.replace(/\\mathbb\{P\}/g, "ℙ");
+      s = s.replace(/\\mathbb\{R\}/g, "ℝ");
+      s = s.replace(/\\mathbb\{E\}/g, "𝔼");
+      s = s.replace(/\\mathbb\{I\}/g, "𝟙");
+      s = s.replace(/\\mathcal\{S\}/g, "𝒮");
+      s = s.replace(/\\mathcal\{R\}/g, "ℛ");
+      s = s.replace(/\\mathcal\{P\}/g, "𝒫");
+      s = s.replace(/\\mathcal\{V\}/g, "𝒱");
+      s = s.replace(/\\rho\b/g, "ρ");
+      s = s.replace(/\\lambda\b/g, "λ");
+      s = s.replace(/\\tau\b/g, "τ");
+      s = s.replace(/\\sigma\b/g, "σ");
+      s = s.replace(/\\gamma\b/g, "γ");
+      s = s.replace(/\\epsilon\b/g, "ε");
+      s = s.replace(/\\alpha\b/g, "α");
+      s = s.replace(/\\beta\b/g, "β");
+      s = s.replace(/\\theta\b/g, "θ");
+      s = s.replace(/\\pi\b/g, "π");
+      s = s.replace(/\\Delta\b/g, "Δ");
+      s = s.replace(/\\nabla\b/g, "∇");
+      s = s.replace(/\\pm\b/g, "±");
+      s = s.replace(/\\ne\b|\\neq\b/g, "≠");
+      s = s.replace(/\\ge\b|\\geq\b/g, "≥");
+      s = s.replace(/\\le\b|\\leq\b/g, "≤");
+      s = s.replace(/\\approx\b/g, "≈");
+      s = s.replace(/\\times\b/g, "×");
+      s = s.replace(/\\otimes\b/g, "⊗");
+      s = s.replace(/\\odot\b/g, "⊙");
+      s = s.replace(/\\implies\b/g, "⟹");
+      s = s.replace(/\\iff\b/g, "⟺");
+      s = s.replace(/\\in\b/g, "∈");
+      s = s.replace(/\\to\b/g, "→");
+      s = s.replace(/\\sum\b/g, "∑");
+      s = s.replace(/\\quad\b/g, "&nbsp;&nbsp;&nbsp;&nbsp;");
+      s = s.replace(/\\qquad\b/g, "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;");
+      s = s.replace(/\\left\[/g, "[");
+      s = s.replace(/\\right\]/g, "]");
+      s = s.replace(/\\left\(/g, "(");
+      s = s.replace(/\\right\)/g, ")");
+      s = s.replace(/\\text\{([^\}]+)\}/g, "<span style='font-style:normal;font-family:var(--font-sans);'>$1</span>");
+      s = s.replace(/\\frac\{([^\}]+)\}\{([^\}]+)\}/g, "($1 / $2)");
+      s = s.replace(/\\([a-zA-Z]+)/g, "$1");
+      return s;
+    }
+
+    function copyCodeFromBlock(blockId, btn) {
+      const el = document.getElementById(blockId);
+      if (!el) return;
+      navigator.clipboard.writeText(el.innerText || el.textContent);
+      const originalText = btn.innerHTML;
+      btn.innerHTML = '<span>Copied!</span>';
+      btn.classList.add('copied');
+      setTimeout(() => {
+        btn.innerHTML = originalText;
+        btn.classList.remove('copied');
+      }, 1500);
+    }
+
+    // -------------------------------------------------------------
+    // Run & Round Comparer (W&B / MLflow style)
+    // -------------------------------------------------------------
+    function initRunComparer() {
+      const selA = document.getElementById("compareSelectA");
+      const selB = document.getElementById("compareSelectB");
+      if (!selA || !selB) return;
+
+      const rounds = DATA.rounds || [];
+      if (!rounds.length) return;
+
+      const optionsHtml = rounds.map((r, idx) => {
+        const title = r.subject || r.round_name;
+        return `<option value="${idx}">${r.round_name} (${r.experiment}) — ${escapeHtml(title.slice(0, 36))}</option>`;
+      }).join("");
+
+      selA.innerHTML = optionsHtml;
+      selB.innerHTML = optionsHtml;
+
+      // Default: select last two rounds
+      selA.value = String(Math.max(0, rounds.length - 2));
+      selB.value = String(rounds.length - 1);
+
+      selA.onchange = renderRunComparer;
+      selB.onchange = renderRunComparer;
+
+      const swapBtn = document.getElementById("btnSwapCompare");
+      if (swapBtn) {
+        swapBtn.onclick = () => {
+          const tmp = selA.value;
+          selA.value = selB.value;
+          selB.value = tmp;
+          renderRunComparer();
+        };
+      }
+
+      document.querySelectorAll("#comparePresets .filter-pill").forEach(pill => {
+        pill.onclick = () => {
+          document.querySelectorAll("#comparePresets .filter-pill").forEach(p => p.classList.remove("active"));
+          pill.classList.add("active");
+          const preset = pill.dataset.preset;
+          if (preset === "latest") {
+            selA.value = String(Math.max(0, rounds.length - 2));
+            selB.value = String(rounds.length - 1);
+          } else if (preset === "first-last") {
+            selA.value = "0";
+            selB.value = String(rounds.length - 1);
+          }
+          renderRunComparer();
+        };
+      });
+    }
+
+    function renderRunComparer() {
+      const container = document.getElementById("compareResultsContainer");
+      const selA = document.getElementById("compareSelectA");
+      const selB = document.getElementById("compareSelectB");
+      if (!container || !selA || !selB) return;
+
+      const rounds = DATA.rounds || [];
+      const rA = rounds[parseInt(selA.value, 10)] || rounds[0];
+      const rB = rounds[parseInt(selB.value, 10)] || rounds[rounds.length - 1];
+
+      if (!rA || !rB) {
+        container.innerHTML = '<div style="padding: 30px; text-align: center; color: var(--text-dim);">Select two rounds to compare.</div>';
+        return;
+      }
+
+      // Compute files diff
+      const filesA = new Set(rA.files_changed || []);
+      const filesB = new Set(rB.files_changed || []);
+      const commonFiles = [...filesA].filter(f => filesB.has(f));
+      const onlyA = [...filesA].filter(f => !filesB.has(f));
+      const onlyB = [...filesB].filter(f => !filesA.has(f));
+
+      container.innerHTML = `
+        <div class="compare-grid">
+          <!-- Round A Card -->
+          <div class="compare-card">
+            <div class="compare-card-header">
+              <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px;">
+                <span class="status-badge active">Baseline (A)</span>
+                <span style="font-family: var(--font-mono); font-size: 11px; color: var(--text-dim);">${escapeHtml(rA.date || 'Undated')}</span>
+              </div>
+              <h2 style="font-size: 18px; margin-bottom: 6px;">${escapeHtml(rA.round_name)}</h2>
+              <div style="font-size: 13px; color: var(--accent); font-weight: 500;">${escapeHtml(rA.subject || 'No subject')}</div>
+              <div style="font-size: 11.5px; color: var(--text-muted); margin-top: 4px;">Experiment: <strong>${escapeHtml(rA.experiment)}</strong></div>
+            </div>
+
+            <div class="compare-section">
+              <div class="compare-section-title">What Changed in this Round</div>
+              <div style="background: var(--bg-surface-raised); padding: 12px; border-radius: 6px; font-size: 13px; line-height: 1.6; border: 1px solid var(--border);">
+                ${rA.what_changed ? simpleMarkdownRender(rA.what_changed) : '<span style="color:var(--text-dim);">No change summary recorded.</span>'}
+              </div>
+            </div>
+
+            <div class="compare-section">
+              <div class="compare-section-title">Issues Resolved</div>
+              <div style="background: var(--bg-surface-raised); padding: 12px; border-radius: 6px; font-size: 13px; line-height: 1.6; border-left: 3px solid var(--success);">
+                ${rA.issues_resolved ? simpleMarkdownRender(rA.issues_resolved) : '<span style="color:var(--text-dim);">None resolved.</span>'}
+              </div>
+            </div>
+
+            <div class="compare-section">
+              <div class="compare-section-title">Touched Files (${filesA.size})</div>
+              <div class="diff-badge-wrap">
+                ${onlyA.map(f => `<span class="diff-badge removed" title="Modified in A only">- ${escapeHtml(f)}</span>`).join("")}
+                ${commonFiles.map(f => `<span class="diff-badge common" title="Modified in both">● ${escapeHtml(f)}</span>`).join("")}
+                ${filesA.size === 0 ? '<span style="font-size:12px; color:var(--text-dim);">No touched files recorded.</span>' : ''}
+              </div>
+            </div>
+
+            ${rA.report ? `
+              <div style="margin-top: 16px;">
+                <button class="doc-pill-btn" onclick="openDocByPath('${escapeHtml(rA.report)}')">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                  <span>Open Audit / Report: ${escapeHtml(rA.report)}</span>
+                </button>
+              </div>
+            ` : ''}
+          </div>
+
+          <!-- Round B Card -->
+          <div class="compare-card">
+            <div class="compare-card-header">
+              <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px;">
+                <span class="status-badge fixed">Comparison (B)</span>
+                <span style="font-family: var(--font-mono); font-size: 11px; color: var(--text-dim);">${escapeHtml(rB.date || 'Undated')}</span>
+              </div>
+              <h2 style="font-size: 18px; margin-bottom: 6px;">${escapeHtml(rB.round_name)}</h2>
+              <div style="font-size: 13px; color: var(--accent); font-weight: 500;">${escapeHtml(rB.subject || 'No subject')}</div>
+              <div style="font-size: 11.5px; color: var(--text-muted); margin-top: 4px;">Experiment: <strong>${escapeHtml(rB.experiment)}</strong></div>
+            </div>
+
+            <div class="compare-section">
+              <div class="compare-section-title">What Changed in this Round</div>
+              <div style="background: var(--bg-surface-raised); padding: 12px; border-radius: 6px; font-size: 13px; line-height: 1.6; border: 1px solid var(--border);">
+                ${rB.what_changed ? simpleMarkdownRender(rB.what_changed) : '<span style="color:var(--text-dim);">No change summary recorded.</span>'}
+              </div>
+            </div>
+
+            <div class="compare-section">
+              <div class="compare-section-title">Issues Resolved</div>
+              <div style="background: var(--bg-surface-raised); padding: 12px; border-radius: 6px; font-size: 13px; line-height: 1.6; border-left: 3px solid var(--success);">
+                ${rB.issues_resolved ? simpleMarkdownRender(rB.issues_resolved) : '<span style="color:var(--text-dim);">None resolved.</span>'}
+              </div>
+            </div>
+
+            <div class="compare-section">
+              <div class="compare-section-title">Touched Files (${filesB.size})</div>
+              <div class="diff-badge-wrap">
+                ${onlyB.map(f => `<span class="diff-badge added" title="New in B">+ ${escapeHtml(f)}</span>`).join("")}
+                ${commonFiles.map(f => `<span class="diff-badge common" title="Modified in both">● ${escapeHtml(f)}</span>`).join("")}
+                ${filesB.size === 0 ? '<span style="font-size:12px; color:var(--text-dim);">No touched files recorded.</span>' : ''}
+              </div>
+            </div>
+
+            ${rB.report ? `
+              <div style="margin-top: 16px;">
+                <button class="doc-pill-btn" onclick="openDocByPath('${escapeHtml(rB.report)}')">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                  <span>Open Audit / Report: ${escapeHtml(rB.report)}</span>
+                </button>
+              </div>
+            ` : ''}
+          </div>
+        </div>
+      `;
+
+      applyMathRendering(container);
+    }
+
+    // -------------------------------------------------------------
+    // Command Palette Modal (W&B / Linear style - Press '/' or 'Cmd+K')
+    // -------------------------------------------------------------
+    function initCommandPalette() {
+      const palette = document.getElementById("commandPalette");
+      const input = document.getElementById("paletteSearchInput");
+      const results = document.getElementById("paletteResults");
+      if (!palette || !input || !results) return;
+
+      function openPalette() {
+        palette.style.display = "flex";
+        input.value = "";
+        input.focus();
+        searchPalette("");
+      }
+
+      function closePalette() {
+        palette.style.display = "none";
+      }
+
+      document.addEventListener("keydown", (e) => {
+        // Toggle on '/' (when not typing in an input/textarea) or Cmd+K / Ctrl+K
+        if (e.key === "/" && !["INPUT", "TEXTAREA", "SELECT"].includes(document.activeElement.tagName)) {
+          e.preventDefault();
+          openPalette();
+        } else if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
+          e.preventDefault();
+          if (palette.style.display === "flex") closePalette();
+          else openPalette();
+        } else if (e.key === "Escape" && palette.style.display === "flex") {
+          closePalette();
+        }
+      });
+
+      palette.addEventListener("click", (e) => {
+        if (e.target === palette) closePalette();
+      });
+
+      input.addEventListener("input", (e) => {
+        searchPalette(e.target.value.trim().toLowerCase());
+      });
+
+      function searchPalette(q) {
+        results.innerHTML = "";
+        const hits = [];
+
+        // Search Directions
+        (DATA.directions || []).forEach(d => {
+          if (!q || d.title.toLowerCase().includes(q) || (d.hypothesis && d.hypothesis.toLowerCase().includes(q))) {
+            hits.push({
+              type: "Direction",
+              title: d.title,
+              subtitle: d.epoch || d.target_venues || d.status,
+              action: () => {
+                switchTab("directions");
+                closePalette();
+              }
+            });
+          }
+        });
+
+        // Search Documents
+        (DATA.documents || []).forEach(doc => {
+          if (!q || doc.name.toLowerCase().includes(q) || (doc.title && doc.title.toLowerCase().includes(q)) || doc.path.toLowerCase().includes(q)) {
+            hits.push({
+              type: "Document",
+              title: doc.title || doc.name,
+              subtitle: doc.path,
+              action: () => {
+                switchTab("documents");
+                displayDocument(doc);
+                closePalette();
+              }
+            });
+          }
+        });
+
+        // Search Issues
+        (DATA.issues || []).forEach(iss => {
+          if (!q || iss.id.toLowerCase().includes(q) || iss.title.toLowerCase().includes(q) || (iss.notes && iss.notes.toLowerCase().includes(q))) {
+            hits.push({
+              type: "Issue " + iss.id,
+              title: iss.title,
+              subtitle: iss.resolved_in ? `Resolved in ${iss.resolved_in}` : "Open",
+              action: () => {
+                showIssueDetails(iss);
+                closePalette();
+              }
+            });
+          }
+        });
+
+        // Search Rounds
+        (DATA.rounds || []).forEach(r => {
+          if (!q || r.round_name.toLowerCase().includes(q) || (r.subject && r.subject.toLowerCase().includes(q))) {
+            hits.push({
+              type: "Round",
+              title: `${r.round_name} (${r.experiment})`,
+              subtitle: r.subject || "No subject",
+              action: () => {
+                const node = (DATA.nodes || []).find(n => n.id === `${r.experiment}/${r.round_name}`);
+                if (node) showNodeDetails(node);
+                closePalette();
+              }
+            });
+          }
+        });
+
+        const displayHits = hits.slice(0, 15);
+        if (!displayHits.length) {
+          results.innerHTML = '<div style="padding: 20px; text-align: center; color: var(--text-dim); font-size: 13px;">No matching results found.</div>';
+          return;
+        }
+
+        displayHits.forEach(h => {
+          const item = document.createElement("div");
+          item.className = "palette-item";
+          item.innerHTML = `
+            <div class="palette-item-left">
+              <span class="palette-item-type">${escapeHtml(h.type)}</span>
+              <div>
+                <div class="palette-item-title">${escapeHtml(h.title)}</div>
+                <div class="palette-item-subtitle">${escapeHtml(h.subtitle)}</div>
+              </div>
+            </div>
+            <span style="font-size: 11px; color: var(--text-dim);">Jump →</span>
+          `;
+          item.onclick = h.action;
+          results.appendChild(item);
+        });
+      }
     }
 
     function escapeHtml(str) {
