@@ -164,3 +164,44 @@ Before declaring an experiment family complete:
 - [ ] `experiment-tracker validate` passes with 0 errors.
 - [ ] `experiment-tracker build` updates the interactive `IDEA_GRAPH.html`.
 - [ ] All issues identified in `TRACKER.md` have explicit resolution paths.
+
+---
+
+## 8. Autonomous Research & Agentic Scientific Discovery (Lessons from "The AI Scientist" & Autonomous Loops)
+
+Recent breakthroughs in autonomous AI research systems (e.g., Sakana AI's *The AI Scientist*, Stanford *STORM*, and automated scientific discovery loops) reveal that scalable AI research requires strict architectural guardrails to prevent hallucinated conclusions, confirmation bias, and endless compute waste. This framework adopts five core auto-research principles:
+
+### 8.1 Progressive Hypothesis Tree Search & Pruning
+Autonomous research is a **directed search graph**, not a linear pipeline:
+- **Hypothesis Nodes:** Each research path represents a testable scientific claim.
+- **Branching:** Promising hypotheses branch into diagnostic sub-experiments and scaling matrices.
+- **Early Pruning:** Refuting a flawed hypothesis early is a first-class contribution. When a pre-registered stopping rule triggers, the branch is permanently pruned (marked `REFUTED / PRUNED`), saving hundreds of compute hours.
+- **Backtracking:** Pruning a branch triggers automatic backtracking to evaluate alternative rival hypotheses.
+
+### 8.2 Dual-Agent Adversarial Verification (Author vs. Auditor)
+Autonomous research fails when the generating agent evaluates its own work. Systems must maintain strict adversarial role separation:
+- **The Experimenter / Author Agent:** Formulates hypotheses, writes code, launches training, and drafts claims.
+- **The Auditor / Reviewer Agent:** Operates with read-only skepticism, independently verifying:
+  1. *Baseline Fairness:* Are baselines identically tuned, or is the proposed method given unfair compute/hyperparameter advantages?
+  2. *Metric Provenance:* Do claims match raw evaluation files (`methods.csv`, `run_summary.json`) down to the exact float?
+  3. *Statistical Significance:* Are seed-matched paired differences significant ($p < 0.05$), or does the effect vanish in seed variance?
+
+### 8.3 Anti-Narrative-Preservation Protocols
+The primary failure mode of automated research agents is **narrative preservation**: when an experiment fails, the agent generates slight variants (rescue ablations) to protect its hypothesis.
+- **Mandatory Pre-Registration:** Before launching jobs, register explicit numerical stopping rules (e.g., "If 2 seeds fail to beat baseline by $\Delta \ge 0.05$, terminate sweep immediately").
+- **Strict Stop Enforcement:** When a stopping rule triggers, the investigation must stop or pivot; rescue runs are disallowed unless accompanied by a formal discrepancy diagnosis.
+
+### 8.4 Confound Isolation vs. Score Chasing
+Autonomous agents often confuse optimizer artifacts with architectural memory capacity:
+- Prior to claiming architectural superiority, an automated study must rule out:
+  - *Optimizer Invariance Confounds:* Testing whether gains persist under invariant optimizers (e.g., SGD/Momentum vs coordinatewise Adam).
+  - *Initialization Confounds:* Verifying initial function values match to $< 10^{-6}$.
+  - *Drift & Staleness Confounds:* Measuring action agreement across update boundaries.
+
+### 8.5 Automated Reproducibility & Cryptographic Provenance
+Every finding in the research graph must be reproducible with zero ambiguity:
+- Git Commit SHA + dirty worktree diff patch
+- Frozen configuration snapshots (`configs_snapshot/`)
+- Seed list and hardware platform fingerprint (CPU/P100/A100)
+- End-to-end execution script (`scripts/run_experiment.py`) that can be executed unattended.
+

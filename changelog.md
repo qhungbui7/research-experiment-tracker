@@ -3,6 +3,9 @@
 
 ## 2026-10-03
 
+- 17:42 - Added Section 8 to PRINCIPLES.md adopting autonomous research principles (tree-search, dual-agent verification, anti-narrative rules, confound isolation)
+- 17:42 - Implemented interactive Progressive Hypothesis Tree Search Visualizer & Decision Matrix in Directions tab
+- 17:42 - Integrated Autonomous Discovery & Rigor Scorecard in Overview tab with claim provenance and early-pruning metrics
 - 13:50 - Migrate and generalize experiment tracking, review lineage, and methodology framework into standalone package
 - 13:50 - Add PRINCIPLES.md defining pre-registered decision protocols, provenance standards, and P0-P4 severity taxonomy
 - 13:50 - Implement unified CLI (init, validate, build, snapshot, finalize, serve, status) with zero external dependencies
@@ -11,4 +14,3 @@
 - 16:45 - Major UI/UX overhaul: multi-view dashboard (Executive KPIs, Issue Table, Decluttered Lineage Graph, Document Reader) with dark/light themes and resolution of all 'undefined' values
 - 17:10 - Add interactive Research Directions view (hypotheses, stopping rules, path outcomes), Code & Fixes inspector, and inline markdown rendering engine (bold, italics, code, math, links, formatted tables)
 - 17:35 - Integrate KaTeX & offline Unicode math engine, fix ASCII box diagrams, add W&B-style Run Comparer, dynamic document Table of Contents, and Cmd+K command palette
-
