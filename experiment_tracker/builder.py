@@ -342,7 +342,7 @@ def build_html_data(
     def add_edge(source: str, target: str, label: str) -> None:
         key = (source, target, label)
         if key not in edges:
-            edges[key] = {"source": source, "target": target, "label": label}
+            edges[key] = {"source": source, "target": target, "label": label, "relation": label}
 
     def add_file(path: str) -> str:
         norm = normalize_path(path, reviews_dir_prefix)
@@ -641,9 +641,132 @@ def build_html_data(
                 },
             )
 
+    # Precompute severity and status metrics
+    sev_counts = {"P0": 0, "P1": 0, "P2": 0, "P3": 0, "P4": 0}
+    open_count = 0
+    fixed_count = 0
+    for issue in issues:
+        sev = (issue.severity or "P2").upper()
+        if sev in sev_counts:
+            sev_counts[sev] += 1
+        is_open = (issue.status or "").lower() in OPEN_STATUSES
+        if is_open:
+            open_count += 1
+        else:
+            fixed_count += 1
+
+    # Discover key research documents for the document reader
+    doc_candidates: list[tuple[Path, str]] = []
+    restart_dir = project_root / "restart"
+    if restart_dir.is_dir():
+        for p in sorted(restart_dir.glob("*.md")):
+            doc_candidates.append((p, "Restart & Strategy"))
+        for p in sorted((restart_dir / "reviews").glob("*.md")):
+            doc_candidates.append((p, "Benchmarks & Audits"))
+        for p in sorted((restart_dir / "reviews").glob("*/README.md")):
+            doc_candidates.append((p, "Study Audits"))
+
+    reviews_dir = project_root / reviews_dir_prefix
+    if reviews_dir.is_dir():
+        for p in sorted(reviews_dir.glob("*.md")):
+            if p.name not in ("IDEA_GRAPH.md", "IDEA_GRAPH.html"):
+                doc_candidates.append((p, "Review System"))
+        for p in sorted(reviews_dir.glob("round_*/review/*.md")):
+            doc_candidates.append((p, "Round Reviews"))
+        for p in sorted(reviews_dir.glob("round_*/rebuttals/*.md")):
+            doc_candidates.append((p, "Rebuttals & Critiques"))
+
+    for name in ("README.md", "ONBOARDING.md", "PRINCIPLES.md", "changelog.md"):
+        p = project_root / name
+        if p.exists():
+            doc_candidates.append((p, "Project Architecture"))
+
+    documents: list[dict[str, Any]] = []
+    seen_docs: set[str] = set()
+    for doc_path, category in doc_candidates:
+        try:
+            rel = doc_path.resolve().relative_to(project_root.resolve()).as_posix()
+        except ValueError:
+            continue
+        if rel in seen_docs:
+            continue
+        seen_docs.add(rel)
+
+        title = doc_path.stem.replace("_", " ").replace("-", " ").title()
+        first_content = ""
+        try:
+            raw_text = doc_path.read_text(encoding="utf-8", errors="replace")
+            for line in raw_text.splitlines()[:15]:
+                if line.startswith("#"):
+                    title = line.lstrip("#").strip()
+                    break
+            first_content = raw_text[:20000]
+        except Exception:
+            first_content = ""
+
+        documents.append({
+            "path": rel,
+            "name": doc_path.name,
+            "category": category,
+            "title": title,
+            "sizeBytes": doc_path.stat().st_size if doc_path.exists() else 0,
+            "content": first_content,
+            "truncated": len(first_content) < (doc_path.stat().st_size if doc_path.exists() else 0),
+        })
+
+    summary = {
+        "total_issues": len(issues),
+        "open_issues": open_count,
+        "fixed_issues": fixed_count,
+        "severity_counts": sev_counts,
+        "total_rounds": len(rounds),
+        "total_experiments": len(chosen_experiments),
+        "total_nodes": len(nodes),
+        "total_edges": len(edges),
+        "total_documents": len(documents),
+    }
+
     return {
         "nodes": list(nodes.values()),
         "edges": list(edges.values()),
         "experiments": [experiment.experiment for experiment in chosen_experiments],
+        "experimentsMeta": [
+            {
+                "experiment": exp.experiment,
+                "subject": exp.subject,
+                "evidence_base": exp.evidence_base,
+                "rounds": exp.rounds,
+                "open_issues": exp.open_issues,
+            }
+            for exp in chosen_experiments
+        ],
+        "issues": [
+            {
+                "id": issue.issue_id,
+                "severity": issue.severity or "P2",
+                "status": issue.status or "open",
+                "title": issue.title,
+                "evidence": issue.evidence,
+                "next_step": issue.next_step,
+                "round": issue.round_name,
+                "experiment": issue.experiment,
+                "source_section": getattr(issue, "source_section", ""),
+            }
+            for issue in issues
+        ],
+        "rounds": [
+            {
+                "experiment": r.experiment,
+                "round": r.round_name,
+                "date": r.date,
+                "focus": r.focus,
+                "trigger": r.trigger,
+                "report": r.report,
+                "open_issues": r.open_issues,
+            }
+            for r in rounds
+        ],
+        "documents": documents,
+        "summary": summary,
         "kindOrder": ["experiment", "round", "issue", "next", "report", "file", "change", "run", "snapshot", "commit"],
     }
