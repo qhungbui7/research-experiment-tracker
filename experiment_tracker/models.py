@@ -46,6 +46,9 @@ class Issue:
     evidence: str
     next_step: str
     source_section: str = ""
+    resolved_in: str = ""
+    notes: str = ""
+    files_changed: tuple[str, ...] = ()
 
 
 @dataclass(frozen=True)

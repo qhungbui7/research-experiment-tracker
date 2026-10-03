@@ -280,6 +280,171 @@ def build_graph(
     return graph.render()
 
 
+def extract_research_directions(project_root: Path) -> list[dict[str, Any]]:
+    """Extract or construct structured research directions/hypotheses for the project."""
+    directions: list[dict[str, Any]] = []
+
+    restart_dir = project_root / "restart"
+    rd_file = restart_dir / "research-direction.md" if restart_dir.is_dir() else project_root / "research-direction.md"
+    roadmap_file = project_root / "ROADMAP.md"
+
+    if rd_file.exists():
+        directions = [
+            {
+                "id": "path_3",
+                "path_num": 3,
+                "title": "Path 3: Fixed Linear Memory Sufficiency for POMDP RL",
+                "epoch": "Epoch 3 (Current Active Phase)",
+                "status": "active",
+                "status_badge": "🟢 Active & Validated",
+                "target_venues": "RLC 2027 / Reinforcement Learning Journal (RLJ) / TMLR",
+                "working_title": "When Does Fixed Linear Memory Suffice for Partially Observable Control? Untangling Representation, Optimization, and Baselines",
+                "hypothesis": "Linear EMA achieves statistical parity with recurrent baselines (GRU/LRU) on continuous filtering at 10–15× throughput; LRU breaks through on active memory overwriting and solves horizon delays up to H=32 where GRU collapses.",
+                "findings": [
+                    "Tier 1 (Continuous Filtering): Linear EMA achieves statistical parity with GRU/LRU on CartPole (+0.496 vs +0.488) and Pendulum (+0.364 vs +0.389) at 10–15× throughput (1,023 vs 102 FPS). Paired seed-matched differences are within noise.",
+                    "Tier 2 (Passive Recall): On RepeatPreviousEasy, GRU (+0.988) and LRU (+0.999) achieve near-perfect recall while Linear EMA fails (-0.061) — a +1.049 return gap that confirms a qualitative architectural boundary.",
+                    "Tier 3 (Active Overwriting): On CountRecallMedium, LRU achieves a breakthrough to -0.578 ± 0.02 while reactive/raw/linear/GRU remain trapped near chance (-0.92). The LRU advantage over GRU is +0.338 (p < 0.001).",
+                    "Horizon Delay Scaling Matrix (27 runs, 100% audited): Solved the GRU Collapse Boundary at H=32 (GRU drops from +0.988 to -0.493; LRU achieves +0.988, a +1.481 advantage). Signal retention at H=64 is -0.038 vs chance floor -0.50.",
+                    "RepeatFirst Forensic Diagnostic: Completed; confirmed 3 compounding PPO recipe failure mechanisms; demoted to Appendix B.",
+                    "In-Flight Extended Capacity Suite (81 runs): CountRecallHard 8-suit, ConcentrationEasy 52-card, NoisyCartPoleHard, NoisyPendulumHard finishing on primary accounts.",
+                ],
+                "stopping_rules": [
+                    {
+                        "rule": "Continuous Filtering Parity",
+                        "status": "passed",
+                        "verdict": "Verified",
+                        "evidence": "Seed-matched diff +0.007 (CartPole) and -0.025 (Pendulum) within noise for 3 seeds at 10-15x FPS.",
+                    },
+                    {
+                        "rule": "Horizon Delay Scaling",
+                        "status": "passed",
+                        "verdict": "Verified",
+                        "evidence": "LRU maintains +0.988 at H=32 while GRU collapses completely to -0.493 (Delta = -1.481).",
+                    },
+                    {
+                        "rule": "Active Memory Overwriting",
+                        "status": "passed",
+                        "verdict": "Verified",
+                        "evidence": "LRU breakthrough to -0.578 replicated to three decimal places across all 3 seeds.",
+                    },
+                ],
+                "documents": [
+                    {"title": "75-Run Benchmark Matrix", "path": "restart/reviews/empirical-benchmark-matrix-75runs-2026-10-02.md"},
+                    {"title": "Horizon Delay Scaling Results", "path": "restart/reviews/horizon-delay-scaling-results-2026-10-03.md"},
+                    {"title": "Research Direction Master", "path": "restart/research-direction.md"},
+                    {"title": "Repeat-First Diagnostic", "path": "restart/reviews/repeat-first-diagnostic-2026-10-03.md"},
+                    {"title": "Path 3 Execution Plan", "path": "restart/path3-execution-plan.md"},
+                ],
+            },
+            {
+                "id": "path_1",
+                "path_num": 1,
+                "title": "Path 1: Learned / Adaptive EMA Memory Superiority",
+                "epoch": "Epoch 1 (Closed 2026-09-19)",
+                "status": "refuted",
+                "status_badge": "🛑 Refuted & Closed",
+                "target_venues": "Original ICML / NeurIPS Agenda",
+                "working_title": "Adaptive Memory Traces for Partially Observable Reinforcement Learning",
+                "hypothesis": "Learned/adaptive feature-space memory representations outperform fixed linear baselines and recurrent architectures in partially observable control.",
+                "findings": [
+                    "35-run benchmark (v8, 7 methods × 5 seeds, 1,024,000 steps each): Learned EMA trailed fixed and normalized linear EMA in every single seed (-0.154 return gap).",
+                    "Local mechanism diagnosis confirmed memory is actively utilized, but adaptive gating provided no stability or performance advantage over fixed decaying traces.",
+                    "Predeclared 5-seed strict superiority check failed completely (0/5 positive seeds).",
+                ],
+                "stopping_rules": [
+                    {
+                        "rule": "5-Seed Superiority Over Fixed Baseline",
+                        "status": "refuted",
+                        "verdict": "Refuted",
+                        "evidence": "Learned EMA was inferior to fixed linear in 5 out of 5 seeds (p < 0.001, delta = -0.154). Agenda officially retired.",
+                    },
+                ],
+                "documents": [
+                    {"title": "v8 Study Results & Audit", "path": "restart/reviews/study-v8-2026-09-19/README.md"},
+                    {"title": "Mechanism Diagnosis & Decision", "path": "restart/reviews/mechanism-diagnosis-2026-09-19/README.md"},
+                    {"title": "Project Retrospective", "path": "restart/amt-project-retrospective.md"},
+                ],
+            },
+            {
+                "id": "path_2",
+                "path_num": 2,
+                "title": "Path 2: Mechanism Confound Isolation (Init, Optimization, Clipping, Drift)",
+                "epoch": "Epoch 2 (Closed 2026-09-26)",
+                "status": "refuted",
+                "status_badge": "🛑 Negative Findings Closed",
+                "target_venues": "Diagnostic Pre-Screening",
+                "working_title": "Isolating Optimization vs Representation Confounds in Linear Trace Baselines",
+                "hypothesis": "The return gap between raw and linear EMA is caused by weight initialization (v9), optimization trajectory divergence, gradient clipping bounds (v11), or non-stationary encoder drift.",
+                "findings": [
+                    "Exact Folding Theorem (V = RP): Evaluated on CPU at float64 precision in 0.69s; proved exact mathematical invariance under SGD/Momentum (< 1e-15 diff), isolating Adam coordinate effects.",
+                    "v9 Initialization Pilot: 6 jobs, 300 CPU replay episodes. Isolated 16.3x initial weight variance confound under default PyTorch initialization.",
+                    "v11 Gradient Clipping Screen: Removing the 0.5 bound hurt returns in seed 7 and helped in seed 8; predeclared 2-seed rule failed.",
+                    "Encoder Drift Diagnostic: Single-update drift is negligible (~0.1% relative L2, 0.000000 KL divergence, 100% action agreement across 40,960 decisions).",
+                ],
+                "stopping_rules": [
+                    {
+                        "rule": "Causal Recipe Intervention Yields General Advantage",
+                        "status": "refuted",
+                        "verdict": "Refuted",
+                        "evidence": "Neither gradient unbounding nor matched initialization removed the gap with competitive returns. Generic optimizer novelty is limited.",
+                    },
+                ],
+                "documents": [
+                    {"title": "Optimization Geometry Audit", "path": "restart/reviews/optimization-geometry-audit/README.md"},
+                    {"title": "v11 Clipping Results & Audit", "path": "restart/reviews/clipping-results-v11-2026-09-21/README.md"},
+                    {"title": "v9 Initialization Pilot & Audit", "path": "restart/reviews/initialization-v9-2026-09-21/README.md"},
+                    {"title": "Encoder Drift Diagnostic", "path": "restart/reviews/encoder-drift-diagnostic/README.md"},
+                    {"title": "Strategic Review 2026-09-26", "path": "restart/amt-strategic-review-2026-09-26.md"},
+                ],
+            },
+            {
+                "id": "path_4",
+                "path_num": 4,
+                "title": "Path 4: Scaled State Space Models & Visual POMDPs",
+                "epoch": "Epoch 4 (Post-Manuscript)",
+                "status": "planned",
+                "status_badge": "⏳ Future / Planned",
+                "target_venues": "AISTATS 2027 / ICML 2027",
+                "working_title": "Diagonal State Space Models for Visual POMDP Control",
+                "hypothesis": "Diagonal state space models (LRU, S4D, Mamba) scale to high-dimensional visual POMDP control with multi-timescale associative memory.",
+                "findings": [
+                    "Preliminary evaluations show LRU is viable for long horizons; expanding to visual inputs and Atari/Procgen is the natural follow-up once Path 3 is published.",
+                ],
+                "stopping_rules": [
+                    {
+                        "rule": "Manuscript Completion Pre-requisite",
+                        "status": "pending",
+                        "verdict": "Pending",
+                        "evidence": "Locked until Path 3 camera-ready manuscript is submitted.",
+                    },
+                ],
+                "documents": [
+                    {"title": "5-Year Survey & Continuation", "path": "restart/amt-5year-survey-and-continuation.md"},
+                ],
+            },
+        ]
+    elif roadmap_file.exists():
+        try:
+            directions = [{
+                "id": "direction_1",
+                "path_num": 1,
+                "title": "Primary Research Direction",
+                "epoch": "Current",
+                "status": "active",
+                "status_badge": "🟢 Active",
+                "target_venues": "Target Conference / Journal",
+                "working_title": roadmap_file.name,
+                "hypothesis": "Main scientific hypothesis outlined in roadmap.",
+                "findings": ["See ROADMAP.md for milestones."],
+                "stopping_rules": [],
+                "documents": [{"title": roadmap_file.name, "path": "ROADMAP.md"}],
+            }]
+        except Exception:
+            pass
+
+    return directions
+
+
 def build_html_data(
     experiments: list[Experiment],
     rounds: list[Round],
@@ -700,7 +865,7 @@ def build_html_data(
                 if line.startswith("#"):
                     title = line.lstrip("#").strip()
                     break
-            first_content = raw_text[:20000]
+            first_content = raw_text[:250000]
         except Exception:
             first_content = ""
 
@@ -714,6 +879,8 @@ def build_html_data(
             "truncated": len(first_content) < (doc_path.stat().st_size if doc_path.exists() else 0),
         })
 
+    directions = extract_research_directions(project_root)
+
     summary = {
         "total_issues": len(issues),
         "open_issues": open_count,
@@ -724,6 +891,7 @@ def build_html_data(
         "total_nodes": len(nodes),
         "total_edges": len(edges),
         "total_documents": len(documents),
+        "total_directions": len(directions),
     }
 
     return {
@@ -751,6 +919,9 @@ def build_html_data(
                 "round": issue.round_name,
                 "experiment": issue.experiment,
                 "source_section": getattr(issue, "source_section", ""),
+                "resolved_in": getattr(issue, "resolved_in", ""),
+                "notes": getattr(issue, "notes", ""),
+                "files_changed": list(getattr(issue, "files_changed", ())),
             }
             for issue in issues
         ],
@@ -763,9 +934,25 @@ def build_html_data(
                 "trigger": r.trigger,
                 "report": r.report,
                 "open_issues": r.open_issues,
+                "what_changed": (contexts.get((r.experiment, r.round_name)).what_changed if contexts and (r.experiment, r.round_name) in contexts else ""),
+                "files_changed": list(contexts.get((r.experiment, r.round_name)).file_paths if contexts and (r.experiment, r.round_name) in contexts else []),
+                "issues_resolved": (contexts.get((r.experiment, r.round_name)).issues_resolved if contexts and (r.experiment, r.round_name) in contexts else ""),
+                "issues_opened": (contexts.get((r.experiment, r.round_name)).issues_opened if contexts and (r.experiment, r.round_name) in contexts else ""),
             }
             for r in rounds
         ],
+        "changes": [
+            {
+                "timestamp": c.timestamp,
+                "title": c.title,
+                "body": c.body,
+                "files": list(c.files),
+                "experiments": list(c.experiments),
+                "rounds": [f"{rp[0]}/{rp[1]}" for rp in c.rounds],
+            }
+            for c in changes
+        ],
+        "directions": directions,
         "documents": documents,
         "summary": summary,
         "kindOrder": ["experiment", "round", "issue", "next", "report", "file", "change", "run", "snapshot", "commit"],

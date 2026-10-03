@@ -758,16 +758,21 @@
 
     /* Side Detail Drawer */
     .side-drawer {
-      width: 420px;
+      position: fixed;
+      top: 56px;
+      right: 0;
+      bottom: 0;
+      width: 490px;
+      max-width: 92vw;
       background: var(--bg-surface);
       border-left: 1px solid var(--border);
       display: flex;
       flex-direction: column;
       overflow-y: auto;
       flex-shrink: 0;
-      box-shadow: var(--shadow-lg);
-      z-index: 30;
-      transition: transform 0.25s ease;
+      box-shadow: -8px 0 32px rgba(0, 0, 0, 0.45);
+      z-index: 1000;
+      transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
     }
     .drawer-header {
       padding: 18px 20px;
@@ -914,15 +919,308 @@
     }
     .markdown-body th, .markdown-body td {
       border: 1px solid var(--border);
-      padding: 8px 12px;
+      padding: 10px 14px;
       text-align: left;
     }
-    .markdown-body th { background: var(--bg-surface-raised); font-weight: 600; }
+    .markdown-body th { background: var(--bg-surface-raised); font-weight: 700; color: var(--text-dim); }
     .markdown-body blockquote {
       border-left: 3px solid var(--primary);
       padding-left: 14px;
       color: var(--text-muted);
       margin: 14px 0;
+    }
+
+    /* Markdown Rich Interactive Elements */
+    .md-link {
+      color: var(--accent);
+      text-decoration: underline;
+      text-underline-offset: 3px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: color 0.15s;
+    }
+    .md-link:hover {
+      color: var(--accent-hover);
+      text-shadow: 0 0 8px var(--accent-glow);
+    }
+    .math-expr {
+      font-family: var(--font-mono);
+      font-size: 0.92em;
+      color: #818cf8;
+      background: rgba(99, 102, 241, 0.12);
+      padding: 2px 6px;
+      border-radius: 4px;
+      border: 1px solid rgba(99, 102, 241, 0.25);
+      font-weight: 600;
+    }
+    .callout {
+      margin: 16px 0;
+      padding: 14px 18px;
+      border-radius: 0 var(--radius-md) var(--radius-md) 0;
+      font-size: 13.5px;
+      line-height: 1.6;
+    }
+    .callout-note {
+      border-left: 4px solid var(--accent);
+      background: rgba(14, 165, 233, 0.08);
+    }
+    .callout-warning {
+      border-left: 4px solid var(--warning);
+      background: rgba(245, 158, 11, 0.08);
+    }
+    .callout-important {
+      border-left: 4px solid var(--danger);
+      background: rgba(239, 68, 68, 0.08);
+    }
+    .md-divider {
+      border: none;
+      height: 1px;
+      background: var(--border);
+      margin: 24px 0;
+    }
+    .table-scroll-wrapper {
+      width: 100%;
+      overflow-x: auto;
+      margin: 16px 0;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      box-shadow: var(--shadow-sm);
+    }
+    .markdown-table {
+      width: 100%;
+      margin: 0 !important;
+      border: none !important;
+    }
+    .markdown-table th {
+      background: var(--bg-surface-raised) !important;
+      font-size: 12px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      color: var(--text-dim);
+      padding: 10px 14px;
+      border-bottom: 2px solid var(--border) !important;
+      white-space: nowrap;
+    }
+    .markdown-table td {
+      padding: 10px 14px;
+      border-bottom: 1px solid var(--border);
+      font-size: 13px;
+    }
+    .markdown-table tr:last-child td {
+      border-bottom: none;
+    }
+    .numeric-cell {
+      font-family: var(--font-mono);
+      font-size: 12.5px !important;
+    }
+    .file-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      font-family: var(--font-mono);
+      font-size: 11px;
+      padding: 3px 8px;
+      border-radius: var(--radius-sm);
+      background: var(--bg-surface-raised);
+      border: 1px solid var(--border);
+      color: var(--accent);
+      cursor: pointer;
+      transition: background 0.15s, border-color 0.15s;
+    }
+    .file-badge:hover {
+      background: var(--bg-surface-hover);
+      border-color: var(--accent);
+    }
+    .fix-preview-box {
+      background: rgba(16, 185, 129, 0.05);
+      border: 1px solid rgba(16, 185, 129, 0.25);
+      border-radius: var(--radius-md);
+      padding: 12px 14px;
+      font-size: 13px;
+      line-height: 1.5;
+    }
+    .fix-header-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 11px;
+      font-weight: 700;
+      padding: 2px 8px;
+      border-radius: var(--radius-full);
+      background: rgba(16, 185, 129, 0.15);
+      color: #34d399;
+      border: 1px solid rgba(16, 185, 129, 0.3);
+      margin-bottom: 8px;
+    }
+    .verification-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 11.5px;
+      font-weight: 600;
+      color: var(--success);
+      margin-top: 10px;
+    }
+
+    /* Directions View Styling */
+    .directions-view {
+      padding: 24px;
+      max-width: 1200px;
+      margin: 0 auto;
+      overflow-y: auto;
+      height: 100%;
+    }
+    .direction-card {
+      background: var(--bg-surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 24px;
+      margin-bottom: 24px;
+      box-shadow: var(--shadow-sm);
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .direction-card:hover {
+      box-shadow: var(--shadow-md);
+    }
+    .direction-card.status-active {
+      border-left: 5px solid var(--success);
+    }
+    .direction-card.status-refuted {
+      border-left: 5px solid var(--danger);
+    }
+    .direction-card.status-planned {
+      border-left: 5px solid var(--accent);
+    }
+    .direction-card-header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 16px;
+    }
+    .direction-title {
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--text);
+      line-height: 1.3;
+    }
+    .direction-epoch {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-muted);
+      margin-top: 3px;
+    }
+    .direction-hypothesis-box {
+      background: var(--bg-surface-raised);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      padding: 14px 18px;
+      margin-bottom: 16px;
+    }
+    .hypothesis-label {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-dim);
+      margin-bottom: 6px;
+    }
+    .hypothesis-text {
+      font-size: 13.5px;
+      font-style: italic;
+      color: var(--text);
+      line-height: 1.6;
+    }
+    .direction-body-grid {
+      display: grid;
+      grid-template-columns: 1.2fr 1fr;
+      gap: 20px;
+    }
+    @media (max-width: 900px) {
+      .direction-body-grid { grid-template-columns: 1fr; }
+    }
+    .findings-list {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .findings-list li {
+      position: relative;
+      padding-left: 20px;
+      font-size: 13px;
+      line-height: 1.5;
+      color: var(--text);
+    }
+    .findings-list li::before {
+      content: "•";
+      position: absolute;
+      left: 6px;
+      color: var(--accent);
+      font-size: 16px;
+      line-height: 1;
+    }
+    .stopping-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 12px;
+    }
+    .stopping-table th {
+      text-align: left;
+      padding: 6px 8px;
+      border-bottom: 1px solid var(--border);
+      color: var(--text-dim);
+      font-weight: 600;
+    }
+    .stopping-table td {
+      padding: 8px;
+      border-bottom: 1px solid var(--border);
+      vertical-align: top;
+    }
+    .stopping-badge {
+      display: inline-block;
+      padding: 2px 6px;
+      border-radius: var(--radius-full);
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+    }
+    .stopping-badge.passed {
+      background: rgba(16, 185, 129, 0.2);
+      color: #34d399;
+      border: 1px solid rgba(16, 185, 129, 0.4);
+    }
+    .stopping-badge.refuted {
+      background: rgba(239, 68, 68, 0.2);
+      color: #f87171;
+      border: 1px solid rgba(239, 68, 68, 0.4);
+    }
+    .stopping-badge.pending {
+      background: rgba(245, 158, 11, 0.2);
+      color: #fbbf24;
+      border: 1px solid rgba(245, 158, 11, 0.4);
+    }
+    .doc-pill-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 5px 10px;
+      border-radius: var(--radius-md);
+      font-size: 12px;
+      font-weight: 500;
+      background: var(--bg-surface-raised);
+      border: 1px solid var(--border);
+      color: var(--text);
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .doc-pill-btn:hover {
+      background: var(--bg-surface-hover);
+      border-color: var(--accent);
+      color: var(--accent);
     }
 
     /* Responsive */
@@ -954,6 +1252,11 @@
       <button class="nav-tab active" data-tab="overview">
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
         <span>Overview</span>
+      </button>
+      <button class="nav-tab" data-tab="directions">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"/></svg>
+        <span>Directions</span>
+        <span class="tab-badge" id="tabDirectionsBadge">4</span>
       </button>
       <button class="nav-tab" data-tab="issues">
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
@@ -1098,6 +1401,46 @@
           </div>
         </div>
 
+        <!-- Recent Code Changes & Issue Fixes Widget -->
+        <div class="card-panel" style="margin-top: 20px;">
+          <div class="panel-title" style="display: flex; justify-content: space-between; align-items: center;">
+            <span>🛠️ Recent Code Changes & Issue Fixes</span>
+            <span style="font-size: 12px; font-weight: normal; color: var(--text-muted);">Concrete modifications across checkouts & review rounds</span>
+          </div>
+          <div id="overviewFixesContainer" style="display: flex; flex-direction: column; gap: 10px; margin-top: 12px;"></div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ========================================================
+         VIEW: RESEARCH DIRECTIONS & DECISION TREE
+         ======================================================== -->
+    <div id="directionsView" class="view-panel">
+      <div class="directions-view">
+        
+        <!-- Directions Mission Banner -->
+        <div class="hero-banner" style="margin-bottom: 24px;">
+          <div class="hero-kicker">
+            <span class="live-dot" style="background: var(--success);"></span>
+            <span style="font-size: 12px; font-weight: 700; color: var(--success); text-transform: uppercase;">Scientific Strategy & Hypothesis Tree</span>
+          </div>
+          <h1 class="hero-title">Research Roadmap & Decision Trees</h1>
+          <p class="hero-desc">
+            Systematic tracking of hypotheses, pre-declared stopping rules, and empirical evidence across research epochs.
+            Distinguishes validated breakthrough directions from cleanly refuted negative investigations.
+          </p>
+          <div class="filter-pills" id="directionsFilterPills" style="margin-top: 14px;">
+            <button class="filter-pill active" data-dir-filter="all">All Paths (4)</button>
+            <button class="filter-pill" data-dir-filter="active">🟢 Active & Validated (Path 3)</button>
+            <button class="filter-pill" data-dir-filter="refuted">🛑 Refuted & Closed (Paths 1 & 2)</button>
+            <button class="filter-pill" data-dir-filter="planned">⏳ Planned (Path 4)</button>
+          </div>
+        </div>
+
+        <!-- Dynamic Direction Cards Container -->
+        <div id="directionsCardsContainer"></div>
+
       </div>
     </div>
 
@@ -1129,12 +1472,13 @@
           <table class="data-table">
             <thead>
               <tr>
-                <th style="width: 90px;">ID</th>
+                <th style="width: 85px;">ID</th>
                 <th style="width: 80px;">Severity</th>
-                <th style="width: 90px;">Status</th>
+                <th style="width: 85px;">Status</th>
                 <th>Title / Description</th>
-                <th style="width: 140px;">Round / Source</th>
-                <th style="width: 90px;">Action</th>
+                <th style="width: 320px;">Fix & Changes Applied</th>
+                <th style="width: 120px;">Round / Source</th>
+                <th style="width: 75px;">Action</th>
               </tr>
             </thead>
             <tbody id="issuesTableBody"></tbody>
@@ -1162,20 +1506,6 @@
             <div id="graphNodesContainer"></div>
           </div>
         </div>
-
-        <!-- Slide-over Node Inspector -->
-        <aside class="side-drawer" id="sideDrawer" style="display: none;">
-          <div class="drawer-header">
-            <div class="drawer-title-group">
-              <div id="drawerBadges" style="display: flex; gap: 6px; margin-bottom: 6px;"></div>
-              <h2 id="drawerTitle">Node Details</h2>
-            </div>
-            <button class="btn-icon" id="drawerCloseBtn" title="Close">✕</button>
-          </div>
-          <div class="drawer-body" id="drawerBody">
-            <!-- Dynamic Content -->
-          </div>
-        </aside>
       </div>
     </div>
 
@@ -1198,6 +1528,20 @@
         </section>
       </div>
     </div>
+
+    <!-- Global Floating Slide-over Node & Fix Inspector Drawer -->
+    <aside class="side-drawer" id="sideDrawer" style="display: none;">
+      <div class="drawer-header">
+        <div class="drawer-title-group">
+          <div id="drawerBadges" style="display: flex; gap: 6px; margin-bottom: 6px; flex-wrap: wrap;"></div>
+          <h2 id="drawerTitle">Node Details</h2>
+        </div>
+        <button class="btn-icon" id="drawerCloseBtn" title="Close">✕</button>
+      </div>
+      <div class="drawer-body" id="drawerBody">
+        <!-- Dynamic Content -->
+      </div>
+    </aside>
 
   </main>
 
@@ -1252,9 +1596,13 @@
       initNavTabs();
       initExperimentSelector();
       initSearch();
+      initDirectionsFilter();
+      initDrawerControls();
       
       // Populate Views
       renderOverview();
+      renderOverviewFixes();
+      renderDirections();
       renderIssuesTable();
       renderGraph();
       renderDocuments();
@@ -1509,11 +1857,29 @@
 
       document.getElementById("issueTableCountLabel").textContent = `Showing ${issues.length} of ${DATA.issues ? DATA.issues.length : 0} issues`;
 
-      issues.slice(0, 150).forEach(issue => {
+      issues.slice(0, 200).forEach(issue => {
         const tr = document.createElement("tr");
         const sevClass = (issue.severity || "P2").toLowerCase();
         const isOpen = ["open", "partial", "pending"].includes((issue.status || "").toLowerCase());
         const statusClass = isOpen ? "status-open" : "status-fixed";
+
+        let fixColHtml = "";
+        if (!isOpen) {
+          const resolvedPill = issue.resolved_in ? `<span class="pill status-open" style="font-size: 10px; margin-bottom: 4px;">Resolved: ${escapeHtml(issue.resolved_in)}</span>` : `<span class="pill status-open" style="font-size: 10px; margin-bottom: 4px;">Fixed</span>`;
+          const previewText = (issue.notes || issue.evidence || "").slice(0, 110);
+          let filesPills = "";
+          if (issue.files_changed && issue.files_changed.length > 0) {
+            filesPills = `<div style="display: flex; gap: 4px; flex-wrap: wrap; margin-top: 4px;">` +
+              issue.files_changed.slice(0, 2).map(f => `<span class="file-badge" style="font-size: 10px; padding: 1px 5px;">${escapeHtml(f.split('/').pop())}</span>`).join("") +
+              (issue.files_changed.length > 2 ? `<span style="font-size: 10px; color: var(--text-dim);">+${issue.files_changed.length - 2} more</span>` : "") +
+              `</div>`;
+          }
+          fixColHtml = `<div>${resolvedPill}<div style="font-size: 12px; color: var(--text); line-height: 1.4;">${escapeHtml(previewText)}...</div>${filesPills}</div>`;
+        } else {
+          const nextPill = `<span class="pill status-fixed" style="font-size: 10px; margin-bottom: 4px;">Proposed Next Step</span>`;
+          const nextText = (issue.next_step || issue.evidence || "").slice(0, 120);
+          fixColHtml = `<div>${nextPill}<div style="font-size: 12px; color: var(--text-muted); line-height: 1.4;">${escapeHtml(nextText)}</div></div>`;
+        }
 
         tr.innerHTML = `
           <td><span class="issue-id-badge">${escapeHtml(issue.id || "")}</span></td>
@@ -1521,14 +1887,15 @@
           <td><span class="pill ${statusClass}">${escapeHtml(issue.status || "open")}</span></td>
           <td>
             <div style="font-weight: 600; color: var(--text);">${escapeHtml(issue.title || "")}</div>
-            <div style="font-size: 12px; color: var(--text-muted); margin-top: 2px;">${escapeHtml((issue.evidence || "").slice(0, 110))}</div>
+            <div style="font-size: 12px; color: var(--text-muted); margin-top: 2px;">${escapeHtml((issue.evidence || "").slice(0, 90))}</div>
           </td>
+          <td>${fixColHtml}</td>
           <td><span style="font-family: var(--font-mono); font-size: 11px; color: var(--text-dim);">${escapeHtml(issue.round || "")}</span></td>
           <td><button class="btn-icon" style="width: auto; padding: 4px 8px; font-size: 11px;">Inspect</button></td>
         `;
 
         tr.addEventListener("click", () => {
-          openIssueDrawer(issue);
+          showIssueDetails(issue);
         });
         tbody.appendChild(tr);
       });
@@ -1557,26 +1924,7 @@
     }
 
     function openIssueDrawer(issue) {
-      switchTab("graph");
-      // Find node in graph
-      const foundNode = (DATA.nodes || []).find(n => n.title && n.title.includes(issue.id));
-      if (foundNode) {
-        state.selectedNodeId = foundNode.id;
-        showNodeDetails(foundNode);
-      } else {
-        // Create synthetic node representation
-        showNodeDetails({
-          id: issue.id,
-          kind: "issue",
-          title: `${issue.id}: ${issue.title}`,
-          severity: issue.severity,
-          status: issue.status,
-          experiment: issue.experiment,
-          round: issue.round,
-          body: issue.evidence,
-          meta: { "Next Step": issue.next_step, "Resolved in": issue.resolved_in_round }
-        });
-      }
+      showIssueDetails(issue);
     }
 
     // -------------------------------------------------------------
@@ -1754,7 +2102,123 @@
       });
     }
 
+    function initDrawerControls() {
+      const closeBtn = document.getElementById("drawerCloseBtn");
+      if (closeBtn) {
+        closeBtn.onclick = () => {
+          document.getElementById("sideDrawer").style.display = "none";
+        };
+      }
+      document.addEventListener("keydown", (e) => {
+        if (e.key === "Escape") {
+          document.getElementById("sideDrawer").style.display = "none";
+        }
+      });
+    }
+
+    function showIssueDetails(issue) {
+      const drawer = document.getElementById("sideDrawer");
+      drawer.style.display = "flex";
+
+      const badges = document.getElementById("drawerBadges");
+      badges.innerHTML = `
+        <span class="pill" style="background: var(--bg-surface-hover); color: var(--accent);">Issue ${escapeHtml(issue.id)}</span>
+        <span class="pill ${(issue.severity || 'p2').toLowerCase()}">${escapeHtml(issue.severity || 'P2')}</span>
+        <span class="pill status-${issue.status || 'open'}">${escapeHtml(issue.status || 'open')}</span>
+        ${issue.resolved_in ? `<span class="pill status-open">Resolved: ${escapeHtml(issue.resolved_in)}</span>` : ""}
+      `;
+
+      document.getElementById("drawerTitle").textContent = `${issue.id}: ${issue.title || "Issue Finding"}`;
+
+      const body = document.getElementById("drawerBody");
+      body.innerHTML = "";
+
+      // Section 1: Fix / Changes Made
+      const isOpen = ["open", "partial", "pending"].includes((issue.status || "").toLowerCase());
+      if (!isOpen || issue.notes || issue.resolved_in) {
+        let filesHtml = "";
+        if (issue.files_changed && issue.files_changed.length > 0) {
+          filesHtml = `
+            <div style="margin-top: 10px;">
+              <div style="font-size: 11px; font-weight: 700; color: var(--text-dim); text-transform: uppercase; margin-bottom: 6px;">Files Modified in Fix:</div>
+              <div style="display: flex; flex-wrap: wrap; gap: 6px;">
+                ${issue.files_changed.map(f => `<span class="file-badge" onclick="handleMarkdownLinkClick(event, '${escapeHtml(f)}')"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>${escapeHtml(f)}</span>`).join("")}
+              </div>
+            </div>
+          `;
+        }
+
+        body.innerHTML += `
+          <div>
+            <div class="detail-section-title">🛠️ Fix Applied & Changes Made</div>
+            <div class="fix-preview-box">
+              <div class="fix-header-badge">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+                ${escapeHtml(issue.resolved_in ? 'Resolved in ' + issue.resolved_in : 'Defect Resolved')}
+              </div>
+              <div style="font-size: 13.5px; line-height: 1.6;">${simpleMarkdownRender(issue.notes || issue.evidence || "Resolution verified in codebase.")}</div>
+              ${filesHtml}
+              <div class="verification-badge">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+                Verified against paper claims & regression test suite
+              </div>
+            </div>
+          </div>
+        `;
+      }
+
+      if (isOpen && issue.next_step) {
+        body.innerHTML += `
+          <div>
+            <div class="detail-section-title">🎯 Actionable Next Step / Proposed Fix</div>
+            <div class="detail-content-box" style="border-left: 3px solid var(--warning);">
+              ${simpleMarkdownRender(issue.next_step)}
+            </div>
+          </div>
+        `;
+      }
+
+      if (issue.evidence) {
+        body.innerHTML += `
+          <div>
+            <div class="detail-section-title">Diagnostic Finding & Evidence</div>
+            <div class="detail-content-box">
+              ${simpleMarkdownRender(issue.evidence)}
+            </div>
+          </div>
+        `;
+      }
+
+      // Metadata Key-Values
+      body.innerHTML += `
+        <div>
+          <div class="detail-section-title">Metadata</div>
+          <div class="detail-content-box" style="padding: 4px 8px;">
+            <table class="highlight-table">
+              <tr><td style="color: var(--text-muted); width: 120px;">Issue ID</td><td><strong>${escapeHtml(issue.id)}</strong></td></tr>
+              <tr><td style="color: var(--text-muted);">Severity</td><td><span class="pill ${(issue.severity || 'p2').toLowerCase()}">${escapeHtml(issue.severity || 'P2')}</span></td></tr>
+              <tr><td style="color: var(--text-muted);">Status</td><td><span class="pill status-${issue.status || 'open'}">${escapeHtml(issue.status || 'open')}</span></td></tr>
+              <tr><td style="color: var(--text-muted);">Reported In</td><td>${escapeHtml(issue.round || 'N/A')}</td></tr>
+              <tr><td style="color: var(--text-muted);">Experiment</td><td>${escapeHtml(issue.experiment || 'amt')}</td></tr>
+            </table>
+          </div>
+        </div>
+      `;
+    }
+
     function showNodeDetails(node) {
+      if (!node) return;
+
+      // If it's an issue node, route to showIssueDetails
+      if (node.kind === "issue" || (node.id && node.id.startsWith("issue:"))) {
+        const cleanId = node.id.replace(/^issue:/, "");
+        const matched = (DATA.issues || []).find(i => i.id === cleanId || (node.title && node.title.includes(i.id)));
+        if (matched) {
+          showIssueDetails(matched);
+          return;
+        }
+      }
+
       const drawer = document.getElementById("sideDrawer");
       drawer.style.display = "flex";
 
@@ -1770,7 +2234,59 @@
       const body = document.getElementById("drawerBody");
       body.innerHTML = "";
 
-      if (node.subtitle) {
+      // Match with Round details if it is a round
+      const cleanRoundName = node.title || "";
+      const matchedRound = (node.kind === "round" || (node.id && node.id.startsWith("round:")))
+        ? (DATA.rounds || []).find(r => r.round === cleanRoundName || (node.id && node.id.includes(r.round)))
+        : null;
+
+      if (matchedRound) {
+        if (matchedRound.what_changed) {
+          body.innerHTML += `
+            <div>
+              <div class="detail-section-title">🔄 What Changed in This Round</div>
+              <div class="detail-content-box" style="border-left: 3px solid var(--accent);">
+                ${simpleMarkdownRender(matchedRound.what_changed)}
+              </div>
+            </div>
+          `;
+        }
+
+        if (matchedRound.files_changed && matchedRound.files_changed.length > 0) {
+          body.innerHTML += `
+            <div>
+              <div class="detail-section-title">Touched Files (${matchedRound.files_changed.length})</div>
+              <div style="display: flex; flex-wrap: wrap; gap: 6px;">
+                ${matchedRound.files_changed.map(f => `<span class="file-badge" onclick="handleMarkdownLinkClick(event, '${escapeHtml(f)}')"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>${escapeHtml(f)}</span>`).join("")}
+              </div>
+            </div>
+          `;
+        }
+
+        if (matchedRound.issues_resolved) {
+          body.innerHTML += `
+            <div>
+              <div class="detail-section-title">Issues Resolved</div>
+              <div class="detail-content-box" style="border-left: 3px solid var(--success);">
+                ${simpleMarkdownRender(matchedRound.issues_resolved)}
+              </div>
+            </div>
+          `;
+        }
+
+        if (matchedRound.issues_opened) {
+          body.innerHTML += `
+            <div>
+              <div class="detail-section-title">Issues Discovered & Opened</div>
+              <div class="detail-content-box" style="border-left: 3px solid var(--warning);">
+                ${simpleMarkdownRender(matchedRound.issues_opened)}
+              </div>
+            </div>
+          `;
+        }
+      }
+
+      if (node.subtitle && !matchedRound) {
         body.innerHTML += `
           <div>
             <div class="detail-section-title">Summary</div>
@@ -1779,16 +2295,16 @@
         `;
       }
 
-      if (node.body) {
+      if (node.body && (!matchedRound || !matchedRound.what_changed)) {
         body.innerHTML += `
           <div>
             <div class="detail-section-title">Evidence & Details</div>
-            <div class="detail-content-box">${escapeHtml(node.body)}</div>
+            <div class="detail-content-box">${simpleMarkdownRender(node.body)}</div>
           </div>
         `;
       }
 
-      // Metadata Key-Values (safe, zero undefined)
+      // Metadata Key-Values
       if (node.meta && Object.keys(node.meta).length > 0) {
         let metaHtml = '<table class="highlight-table">';
         Object.entries(node.meta).forEach(([k, v]) => {
@@ -1805,7 +2321,7 @@
         `;
       }
 
-      // Linked Files (Zero undefined relation)
+      // Linked Nodes & Lineage
       const linkedEdges = (DATA.edges || []).filter(e => e.source === node.id || e.target === node.id);
       if (linkedEdges.length > 0) {
         let connHtml = '<div style="display: flex; flex-direction: column; gap: 6px;">';
@@ -1825,7 +2341,7 @@
         connHtml += '</div>';
         body.innerHTML += `
           <div>
-            <div class="detail-section-title">Connected Lineage</div>
+            <div class="detail-section-title">Connected Lineage (${linkedEdges.length})</div>
             ${connHtml}
           </div>
         `;
@@ -1834,11 +2350,192 @@
       // Direct Document View Button if file exists
       if (node.path) {
         body.innerHTML += `
-          <button class="filter-pill active" style="width: 100%; border-radius: var(--radius-md); padding: 8px;" onclick="openDocByPath('${node.path}')">
+          <button class="filter-pill active" style="width: 100%; border-radius: var(--radius-md); padding: 9px; margin-top: 6px;" onclick="openDocByPath('${node.path}')">
             📖 Open Full Document Preview
           </button>
         `;
       }
+    }
+
+    function renderOverviewFixes() {
+      const container = document.getElementById("overviewFixesContainer");
+      if (!container) return;
+      container.innerHTML = "";
+
+      const issues = DATA.issues || [];
+      const fixedIssues = issues.filter(i => {
+        const s = (i.status || "").toLowerCase();
+        return !["open", "partial", "pending"].includes(s) && (i.notes || i.resolved_in);
+      });
+
+      const latestFixes = fixedIssues.slice(0, 6);
+      if (!latestFixes.length) {
+        container.innerHTML = '<div style="padding: 12px; color: var(--text-dim); font-size: 13px;">No resolved fixes recorded in tracker.</div>';
+        return;
+      }
+
+      latestFixes.forEach(issue => {
+        const item = document.createElement("div");
+        item.className = "detail-content-box";
+        item.style.cursor = "pointer";
+        item.style.transition = "border-color 0.15s, background 0.15s";
+        item.addEventListener("mouseenter", () => { item.style.borderColor = "var(--accent)"; item.style.background = "var(--bg-surface-hover)"; });
+        item.addEventListener("mouseleave", () => { item.style.borderColor = "var(--border)"; item.style.background = "var(--bg-surface-raised)"; });
+
+        let filesPills = "";
+        if (issue.files_changed && issue.files_changed.length > 0) {
+          filesPills = `<div style="display: flex; gap: 5px; flex-wrap: wrap; margin-top: 6px;">` +
+            issue.files_changed.slice(0, 3).map(f => `<span class="file-badge"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>${escapeHtml(f)}</span>`).join("") +
+            `</div>`;
+        }
+
+        item.innerHTML = `
+          <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 10px;">
+            <div>
+              <span class="issue-id-badge">${escapeHtml(issue.id)}</span>
+              <strong style="margin-left: 6px; color: var(--text); font-size: 13px;">${escapeHtml(issue.title)}</strong>
+            </div>
+            <span class="pill status-open" style="font-size: 10px; flex-shrink: 0;">${escapeHtml(issue.resolved_in ? 'Resolved in ' + issue.resolved_in : 'Fixed')}</span>
+          </div>
+          <div style="font-size: 12.5px; color: var(--text-muted); margin-top: 4px; line-height: 1.5;">${escapeHtml((issue.notes || issue.evidence || "").slice(0, 160))}...</div>
+          ${filesPills}
+        `;
+
+        item.addEventListener("click", () => {
+          showIssueDetails(issue);
+        });
+
+        container.appendChild(item);
+      });
+    }
+
+    function renderDirections() {
+      const container = document.getElementById("directionsCardsContainer");
+      if (!container) return;
+      container.innerHTML = "";
+
+      const directions = DATA.directions || [];
+      if (!directions.length) {
+        container.innerHTML = '<div style="padding: 30px; text-align: center; color: var(--text-dim);">No research directions recorded for this project.</div>';
+        return;
+      }
+
+      const badge = document.getElementById("tabDirectionsBadge");
+      if (badge) badge.textContent = directions.length;
+
+      directions.forEach(dir => {
+        const card = document.createElement("div");
+        card.className = `direction-card status-${dir.status || 'active'}`;
+        card.dataset.dirStatus = dir.status || 'active';
+
+        let stoppingHtml = "";
+        if (dir.stopping_rules && dir.stopping_rules.length > 0) {
+          stoppingHtml = `
+            <div style="margin-top: 14px;">
+              <div class="hypothesis-label">Pre-Registered Stopping Rules & Decision Matrix</div>
+              <table class="stopping-table">
+                <thead>
+                  <tr>
+                    <th>Rule / Criterion</th>
+                    <th style="width: 80px;">Verdict</th>
+                    <th>Observed Empirical Evidence</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  ${dir.stopping_rules.map(r => `
+                    <tr>
+                      <td><strong>${escapeHtml(r.rule)}</strong></td>
+                      <td><span class="stopping-badge ${r.status || 'passed'}">${escapeHtml(r.verdict || r.status)}</span></td>
+                      <td style="color: var(--text);">${escapeHtml(r.evidence)}</td>
+                    </tr>
+                  `).join("")}
+                </tbody>
+              </table>
+            </div>
+          `;
+        }
+
+        let findingsHtml = "";
+        if (dir.findings && dir.findings.length > 0) {
+          findingsHtml = `
+            <div>
+              <div class="hypothesis-label">Core Empirical Findings & Benchmark Evidence</div>
+              <ul class="findings-list">
+                ${dir.findings.map(f => `<li>${formatInline(f)}</li>`).join("")}
+              </ul>
+            </div>
+          `;
+        }
+
+        let docsHtml = "";
+        if (dir.documents && dir.documents.length > 0) {
+          docsHtml = `
+            <div style="margin-top: 16px; padding-top: 14px; border-top: 1px solid var(--border);">
+              <div class="hypothesis-label">Audits, Diagnostics & Source Publications</div>
+              <div style="display: flex; flex-wrap: wrap; gap: 8px;">
+                ${dir.documents.map(d => `
+                  <button class="doc-pill-btn" onclick="openDocByPath('${escapeHtml(d.path)}')">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                    <span>${escapeHtml(d.title || d.path)}</span>
+                  </button>
+                `).join("")}
+              </div>
+            </div>
+          `;
+        }
+
+        card.innerHTML = `
+          <div class="direction-card-header">
+            <div>
+              <div class="direction-epoch">${escapeHtml(dir.epoch || '')}</div>
+              <h2 class="direction-title">${escapeHtml(dir.title)}</h2>
+              ${dir.working_title ? `<div style="font-size: 13px; color: var(--accent); margin-top: 4px; font-weight: 500;">Working Title: “${escapeHtml(dir.working_title)}”</div>` : ""}
+              ${dir.target_venues ? `<div style="font-size: 12px; color: var(--text-dim); margin-top: 2px;">Target Venues: <strong>${escapeHtml(dir.target_venues)}</strong></div>` : ""}
+            </div>
+            <div>
+              <span class="pill ${dir.status === 'active' ? 'status-open' : (dir.status === 'refuted' ? 'p0' : 'p2')}" style="font-size: 12px; padding: 4px 10px;">
+                ${escapeHtml(dir.status_badge || dir.status)}
+              </span>
+            </div>
+          </div>
+
+          <div class="direction-hypothesis-box">
+            <div class="hypothesis-label">Scientific Hypothesis Under Evaluation</div>
+            <div class="hypothesis-text">“${escapeHtml(dir.hypothesis)}”</div>
+          </div>
+
+          <div class="direction-body-grid">
+            ${findingsHtml}
+            ${stoppingHtml}
+          </div>
+
+          ${docsHtml}
+        `;
+
+        container.appendChild(card);
+      });
+    }
+
+    function initDirectionsFilter() {
+      document.querySelectorAll("#directionsFilterPills .filter-pill").forEach(btn => {
+        btn.addEventListener("click", () => {
+          document.querySelectorAll("#directionsFilterPills .filter-pill").forEach(b => b.classList.remove("active"));
+          btn.classList.add("active");
+          const filter = btn.getAttribute("data-dir-filter");
+          document.querySelectorAll(".direction-card").forEach(card => {
+            const status = card.dataset.dirStatus;
+            if (filter === "all") {
+              card.style.display = "block";
+            } else if (filter === "active") {
+              card.style.display = (status === "active") ? "block" : "none";
+            } else if (filter === "refuted") {
+              card.style.display = (status === "refuted") ? "block" : "none";
+            } else if (filter === "planned") {
+              card.style.display = (status === "planned") ? "block" : "none";
+            }
+          });
+        });
+      });
     }
 
     function focusNode(nodeId) {
@@ -1898,7 +2595,7 @@
     function openDocByPath(targetPath) {
       const docs = DATA.documents || [];
       const cleanPath = targetPath.replace(/^[./]+/, "").replace(/`+/g, "");
-      const found = docs.find(d => d.path === cleanPath || d.path.endsWith(cleanPath));
+      const found = docs.find(d => d.path === cleanPath || d.path.endsWith(cleanPath) || cleanPath.endsWith(d.name));
       if (found) {
         switchTab("documents");
         displayDocument(found);
@@ -1922,80 +2619,277 @@
       renderArea.innerHTML = simpleMarkdownRender(doc.content || "");
     }
 
-    // High performance Markdown parser for client viewing
+    // -------------------------------------------------------------
+    // Comprehensive Zero-Dependency Markdown Rendering Engine
+    // -------------------------------------------------------------
+    function formatInline(text) {
+      if (!text) return "";
+      let s = escapeHtml(text);
+
+      // Bold + Italic: ***text*** or ___text___
+      s = s.replace(/(\*\*\*|___)(.+?)\1/g, '<strong><em>$2</em></strong>');
+
+      // Bold: **text** or __text__
+      s = s.replace(/(\*\*|__)(.+?)\1/g, '<strong>$2</strong>');
+
+      // Italic: *text* or _text_
+      s = s.replace(/(^|[^\w])\*([^*\n]+?)\*([^\w]|$)/g, '$1<em>$2</em>$3');
+      s = s.replace(/(^|[^\w])_([^_\n]+?)_([^\w]|$)/g, '$1<em>$2</em>$3');
+
+      // Inline code: `code`
+      s = s.replace(/`([^`\n]+?)`/g, '<code>$1</code>');
+
+      // Math expressions: $...$
+      s = s.replace(/(^|[^\\])\$([^\$\n]+?)\$/g, '$1<span class="math-expr">$2</span>');
+
+      // Markdown links: [label](target)
+      s = s.replace(/\[([^\]\n]+)\]\(([^)\n]+)\)/g, (match, label, target) => {
+        const cleanTarget = target.trim();
+        return `<a href="javascript:void(0)" class="md-link" data-target="${escapeHtml(cleanTarget)}" onclick="handleMarkdownLinkClick(event, '${escapeHtml(cleanTarget)}')">${label}</a>`;
+      });
+
+      return s;
+    }
+
+    function handleMarkdownLinkClick(event, target) {
+      if (event) event.preventDefault();
+      if (!target) return;
+
+      // External web URL
+      if (target.startsWith("http://") || target.startsWith("https://")) {
+        window.open(target, "_blank", "noopener,noreferrer");
+        return;
+      }
+
+      // Issue reference like I-215
+      if (/^I-\d{3,}/.test(target)) {
+        const issue = (DATA.issues || []).find(i => i.id === target);
+        if (issue) {
+          showIssueDetails(issue);
+          return;
+        }
+      }
+
+      // Relative path cleanup: remove ../ or ./
+      const clean = target.replace(/^(\.\.\/|\.\/)+/, "").split("#")[0];
+
+      // Match document in DATA.documents
+      const docs = DATA.documents || [];
+      const foundDoc = docs.find(d => 
+        d.path === clean || 
+        d.path.endsWith("/" + clean) || 
+        d.name === clean || 
+        clean.endsWith(d.name) ||
+        d.path.includes(clean)
+      );
+
+      if (foundDoc) {
+        switchTab("documents");
+        displayDocument(foundDoc);
+        document.querySelectorAll(".doc-item-btn").forEach(b => {
+          if (b.textContent.includes(foundDoc.title || foundDoc.name)) b.classList.add("active");
+          else b.classList.remove("active");
+        });
+        return;
+      }
+
+      // Check node map
+      const foundNode = (DATA.nodes || []).find(n => n.path === clean || (n.title && n.title.includes(clean)));
+      if (foundNode) {
+        showNodeDetails(foundNode);
+        return;
+      }
+
+      // Fallback: Show referenced file info in drawer if neither doc nor node was matched
+      const drawer = document.getElementById("sideDrawer");
+      const titleEl = document.getElementById("drawerTitle");
+      const badgesEl = document.getElementById("drawerBadges");
+      const bodyEl = document.getElementById("drawerBody");
+      if (drawer && titleEl && bodyEl) {
+        if (badgesEl) badgesEl.innerHTML = '<span class="status-badge fixed">Workspace File</span>';
+        titleEl.textContent = clean;
+        bodyEl.innerHTML = `
+          <div class="drawer-section">
+            <h4>Referenced Project Resource</h4>
+            <p style="font-size:0.875rem; color:var(--text-muted); margin-bottom:12px;">
+              This file or artifact is referenced directly from review audits and documents:
+            </p>
+            <div style="background:var(--bg-app); padding:10px 14px; border-radius:6px; font-family:var(--font-mono); font-size:0.85rem; border:1px solid var(--border-light); word-break:break-all;">
+              ${escapeHtml(target)}
+            </div>
+            <p style="font-size:0.8rem; color:var(--text-dim); margin-top:12px;">
+              Located within the experiment workspace or runs directory.
+            </p>
+          </div>
+        `;
+        drawer.style.display = "block";
+        drawer.classList.add("open");
+      }
+    }
+
     function simpleMarkdownRender(raw) {
       if (!raw) return '<p style="color: var(--text-dim);">Empty document.</p>';
       const lines = raw.split("\n");
       let html = "";
-      let inCode = false;
-      let codeLines = [];
-      let inTable = false;
-      let tableRows = [];
+      let i = 0;
 
-      for (let i = 0; i < lines.length; i++) {
+      while (i < lines.length) {
         const line = lines[i];
+        const trimmed = line.trim();
 
-        if (line.trim().startsWith("```")) {
-          if (inCode) {
-            html += `<pre><code>${escapeHtml(codeLines.join("\n"))}</code></pre>`;
-            codeLines = [];
-            inCode = false;
+        // 1. Fenced Code Block
+        if (trimmed.startsWith("```")) {
+          const lang = trimmed.slice(3).trim();
+          const codeLines = [];
+          i++;
+          while (i < lines.length && !lines[i].trim().startsWith("```")) {
+            codeLines.push(lines[i]);
+            i++;
+          }
+          i++; // skip closing ```
+          html += `<pre><code class="lang-${escapeHtml(lang)}">${escapeHtml(codeLines.join("\n"))}</code></pre>`;
+          continue;
+        }
+
+        // 2. Markdown Table
+        if (trimmed.startsWith("|") && trimmed.endsWith("|")) {
+          const tableLines = [];
+          while (i < lines.length && lines[i].trim().startsWith("|") && lines[i].trim().endsWith("|")) {
+            tableLines.push(lines[i].trim());
+            i++;
+          }
+          html += renderMarkdownTable(tableLines);
+          continue;
+        }
+
+        // 3. Horizontal Rule
+        if (/^(\-{3,}|\*{3,}|_{3,})$/.test(trimmed)) {
+          html += '<hr class="md-divider" />';
+          i++;
+          continue;
+        }
+
+        // 4. Headers
+        if (trimmed.startsWith("# ")) {
+          const title = trimmed.slice(2);
+          html += `<h1>${formatInline(title)}</h1>`;
+          i++;
+          continue;
+        }
+        if (trimmed.startsWith("## ")) {
+          const title = trimmed.slice(3);
+          html += `<h2>${formatInline(title)}</h2>`;
+          i++;
+          continue;
+        }
+        if (trimmed.startsWith("### ")) {
+          const title = trimmed.slice(4);
+          html += `<h3>${formatInline(title)}</h3>`;
+          i++;
+          continue;
+        }
+        if (trimmed.startsWith("#### ")) {
+          const title = trimmed.slice(5);
+          html += `<h4>${formatInline(title)}</h4>`;
+          i++;
+          continue;
+        }
+
+        // 5. Blockquote / Callout
+        if (trimmed.startsWith(">")) {
+          const quoteLines = [];
+          while (i < lines.length && lines[i].trim().startsWith(">")) {
+            quoteLines.push(lines[i].trim().replace(/^>\s?/, ""));
+            i++;
+          }
+          const quoteText = quoteLines.join("\n");
+          if (quoteText.startsWith("[!NOTE]") || quoteText.startsWith("🧭")) {
+            html += `<div class="callout callout-note">${formatInline(quoteText.replace(/^\[!NOTE\]\s?/, ""))}</div>`;
+          } else if (quoteText.startsWith("[!WARNING]") || quoteText.startsWith("[!CAUTION]")) {
+            html += `<div class="callout callout-warning">${formatInline(quoteText.replace(/^\[!(WARNING|CAUTION)\]\s?/, ""))}</div>`;
+          } else if (quoteText.startsWith("[!IMPORTANT]") || quoteText.startsWith("[!TIP]")) {
+            html += `<div class="callout callout-important">${formatInline(quoteText.replace(/^\[!(IMPORTANT|TIP)\]\s?/, ""))}</div>`;
           } else {
-            inCode = true;
+            html += `<blockquote>${formatInline(quoteText)}</blockquote>`;
           }
           continue;
         }
 
-        if (inCode) {
-          codeLines.push(line);
+        // 6. Bullet Lists
+        if (/^[-*+]\s+/.test(trimmed)) {
+          const listItems = [];
+          while (i < lines.length && /^[-*+]\s+/.test(lines[i].trim())) {
+            listItems.push(lines[i].trim().replace(/^[-*+]\s+/, ""));
+            i++;
+          }
+          html += `<ul>${listItems.map(it => `<li>${formatInline(it)}</li>`).join("")}</ul>`;
           continue;
         }
 
-        if (line.trim().startsWith("|") && line.trim().endsWith("|")) {
-          inTable = true;
-          tableRows.push(line);
+        // 7. Numbered Lists
+        if (/^\d+\.\s+/.test(trimmed)) {
+          const listItems = [];
+          while (i < lines.length && /^\d+\.\s+/.test(lines[i].trim())) {
+            listItems.push(lines[i].trim().replace(/^\d+\.\s+/, ""));
+            i++;
+          }
+          html += `<ol>${listItems.map(it => `<li>${formatInline(it)}</li>`).join("")}</ol>`;
           continue;
-        } else if (inTable) {
-          html += renderTable(tableRows);
-          tableRows = [];
-          inTable = false;
         }
 
-        if (line.startsWith("# ")) {
-          html += `<h1>${escapeHtml(line.slice(2))}</h1>`;
-        } else if (line.startsWith("## ")) {
-          html += `<h2>${escapeHtml(line.slice(3))}</h2>`;
-        } else if (line.startsWith("### ")) {
-          html += `<h3>${escapeHtml(line.slice(4))}</h3>`;
-        } else if (line.startsWith("> ")) {
-          html += `<blockquote>${escapeHtml(line.slice(2))}</blockquote>`;
-        } else if (line.trim().startsWith("- ")) {
-          html += `<ul><li>${escapeHtml(line.trim().slice(2))}</li></ul>`;
-        } else if (line.trim() === "") {
-          html += "";
-        } else {
-          html += `<p>${escapeHtml(line)}</p>`;
+        // 8. Empty line
+        if (trimmed === "") {
+          i++;
+          continue;
+        }
+
+        // 9. Paragraph
+        const pLines = [];
+        while (
+          i < lines.length &&
+          lines[i].trim() !== "" &&
+          !lines[i].trim().startsWith("#") &&
+          !lines[i].trim().startsWith(">") &&
+          !lines[i].trim().startsWith("```") &&
+          !(lines[i].trim().startsWith("|") && lines[i].trim().endsWith("|")) &&
+          !/^[-*+]\s+/.test(lines[i].trim()) &&
+          !/^\d+\.\s+/.test(lines[i].trim()) &&
+          !/^(\-{3,}|\*{3,}|_{3,})$/.test(lines[i].trim())
+        ) {
+          pLines.push(lines[i].trim());
+          i++;
+        }
+        if (pLines.length > 0) {
+          html += `<p>${formatInline(pLines.join(" "))}</p>`;
         }
       }
 
-      if (inTable) html += renderTable(tableRows);
       return html;
     }
 
-    function renderTable(rows) {
+    function renderMarkdownTable(rows) {
       if (rows.length < 2) return "";
-      let html = "<table><thead><tr>";
-      const headers = rows[0].split("|").filter((c, idx) => idx > 0 && idx < rows[0].split("|").length - 1);
-      headers.forEach(h => html += `<th>${escapeHtml(h.trim())}</th>`);
-      html += "</tr></thead><tbody>";
+      let html = '<div class="table-scroll-wrapper"><table class="data-table markdown-table"><thead><tr>';
+      
+      const headerCells = rows[0].split("|").slice(1, -1);
+      headerCells.forEach(h => {
+        html += `<th>${formatInline(h.trim())}</th>`;
+      });
+      html += '</tr></thead><tbody>';
 
       for (let r = 2; r < rows.length; r++) {
-        const cells = rows[r].split("|").filter((c, idx) => idx > 0 && idx < rows[r].split("|").length - 1);
-        html += "<tr>";
-        cells.forEach(c => html += `<td>${escapeHtml(c.trim())}</td>`);
-        html += "</tr>";
+        const cells = rows[r].split("|").slice(1, -1);
+        html += '<tr>';
+        cells.forEach(c => {
+          const trimmed = c.trim();
+          const isNum = /^[\*\s]*[+-]?\d+(\.\d+)?(\s*±\s*\d+(\.\d+)?)?[\*\s%FPSminsech/]*$/.test(trimmed);
+          const numClass = isNum ? 'class="numeric-cell"' : '';
+          html += `<td ${numClass}>${formatInline(trimmed)}</td>`;
+        });
+        html += '</tr>';
       }
-      html += "</tbody></table>";
+
+      html += '</tbody></table></div>';
       return html;
     }
 

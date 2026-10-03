@@ -210,8 +210,21 @@ def parse_tracker(path: Path, default_experiment: str = "amt") -> list[Issue]:
                     exp = default_experiment
                     rnd = found if found.startswith("round_") else f"round_{found}"
 
-                evidence = row.get("Evidence", row.get("Notes", "")).strip()
-                next_step = row.get("Next Step", row.get("Next step", row.get("Resolved", ""))).strip()
+                raw_resolved = row.get("Resolved", "").strip()
+                raw_notes = row.get("Notes", "").strip()
+                evidence = row.get("Evidence", raw_notes).strip()
+                next_step = row.get("Next Step", row.get("Next step", raw_resolved)).strip()
+                resolved_in = raw_resolved if raw_resolved != "--" else ""
+                notes = raw_notes
+
+                # Extract changed file paths from notes, evidence, and next_step
+                all_text = f"{notes} {evidence} {next_step}"
+                path_candidates = re.findall(r"[`']?([a-zA-Z0-9_\-\./]+\.[a-zA-Z0-9]{1,5})[`']?", all_text)
+                valid_exts = {".tex", ".py", ".md", ".yaml", ".yml", ".json", ".sh", ".csv", ".ipynb", ".toml", ".html"}
+                files_changed = tuple(dict.fromkeys(
+                    p.strip("`' ") for p in path_candidates
+                    if any(p.strip("`' ").endswith(ext) for ext in valid_exts) and not p.startswith("http")
+                ))
 
                 issues.append(
                     Issue(
@@ -224,6 +237,9 @@ def parse_tracker(path: Path, default_experiment: str = "amt") -> list[Issue]:
                         evidence=evidence,
                         next_step=next_step,
                         source_section=current_section,
+                        resolved_in=resolved_in,
+                        notes=notes,
+                        files_changed=files_changed,
                     )
                 )
             i += 1
