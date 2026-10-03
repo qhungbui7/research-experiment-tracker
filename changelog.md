@@ -3,6 +3,10 @@
 
 ## 2026-10-03
 
+- 19:35 - Overhauled Lineage Graph UI/UX: removed unwanted wheel/trackpad scroll-zoom, replacing it with smooth 2D canvas panning and reserving zoom exclusively for Ctrl/Cmd+wheel, trackpad pinch, and dedicated toolbar buttons
+- 19:35 - Implemented 4 smart Lineage Graph layout engines: Timeline Flow (chronological spine with vertically clustered findings eliminating spaghetti links), Clustered DAG (research epochs), Focus Subgraph (isolated 1-hop causal neighborhood), and All (compact multi-column)
+- 19:35 - Added live in-graph search filtering with dimming and Enter-to-center navigation, type filtering pills (All, Rounds, Issues, P0/P1 Blockers), and dynamic bounding-box screen fitting
+- 19:35 - Added defensive null-safe element access across all dashboard views to ensure rock-solid rendering across any data subset
 - 17:58 - Fixed client-side TypeError in initRunComparer by safely resolving round/round_name and focus/subject properties
 - 17:58 - Added defensive try-catch wrappers around all view initializers and registered window.showTab/switchTab
 - 17:42 - Added Section 8 to PRINCIPLES.md adopting autonomous research principles (tree-search, dual-agent verification, anti-narrative rules, confound isolation)

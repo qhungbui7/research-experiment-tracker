@@ -639,11 +639,60 @@
     }
     .graph-workspace:active { cursor: grabbing; }
 
+    /* Graph Top Toolbar */
+    .graph-top-toolbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px 16px;
+      background: var(--bg-surface);
+      border-bottom: 1px solid var(--border);
+      flex-wrap: wrap;
+      gap: 10px;
+      z-index: 10;
+    }
+    .graph-toolbar-group {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .graph-search-box {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      background: var(--bg-surface-raised);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      padding: 4px 10px;
+      font-size: 12px;
+    }
+    .graph-search-box input {
+      background: none;
+      border: none;
+      outline: none;
+      color: var(--text);
+      font-size: 12px;
+      width: 140px;
+    }
+    .graph-search-box input::placeholder {
+      color: var(--text-dim);
+    }
+    .graph-nav-hint {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 11px;
+      color: var(--text-dim);
+      padding-left: 8px;
+      border-left: 1px solid var(--border);
+    }
+
     /* Floating Graph Controls */
     .graph-floating-controls {
       position: absolute;
-      top: 16px;
-      left: 16px;
+      top: 14px;
+      left: 14px;
       display: flex;
       align-items: center;
       gap: 8px;
@@ -730,6 +779,47 @@
       z-index: 20;
     }
     .node-card.dimmed { opacity: 0.15; filter: grayscale(80%); }
+    .node-card.experiment {
+      border: 1.5px solid var(--accent);
+      background: linear-gradient(180deg, rgba(59, 130, 246, 0.12) 0%, var(--bg-surface) 100%);
+      box-shadow: 0 4px 16px rgba(59, 130, 246, 0.18);
+    }
+    .node-card.round {
+      border-top: 3px solid var(--accent);
+    }
+    .node-card.issue {
+      border-left: 3px solid var(--warning);
+    }
+    .node-card.issue.p0 {
+      border-left: 3px solid var(--danger);
+    }
+    .node-card.issue.p1 {
+      border-left: 3px solid #f97316;
+    }
+    .node-card.report, .node-card.file {
+      border-left: 3px solid var(--purple);
+    }
+    .epoch-group-box {
+      position: absolute;
+      border: 1px dashed rgba(148, 163, 184, 0.35);
+      background: rgba(30, 41, 59, 0.15);
+      border-radius: var(--radius-lg);
+      pointer-events: none;
+    }
+    .epoch-group-label {
+      position: absolute;
+      top: -12px;
+      left: 16px;
+      background: var(--bg-surface-raised);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 2px 8px;
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--accent);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
     .node-kicker {
       display: flex;
       align-items: center;
@@ -2120,13 +2210,47 @@
          ======================================================== -->
     <div id="graphView" class="view-panel">
       <div class="graph-view">
+        
+        <!-- Graph Mode & Filter Toolbar -->
+        <div class="graph-top-toolbar">
+          <div class="graph-toolbar-group">
+            <span style="font-size: 13px; font-weight: 700; color: var(--text); display: flex; align-items: center; gap: 6px; margin-right: 4px;">
+              <span>🌐 Lineage Graph</span>
+            </span>
+            <div class="filter-pills" id="graphModePills">
+              <button class="filter-pill active" data-graph-mode="timeline" title="Chronological Rounds Flow">⏱️ Timeline Flow</button>
+              <button class="filter-pill" data-graph-mode="clustered" title="Grouped by Epochs and Rounds">🔬 Clustered DAG</button>
+              <button class="filter-pill" data-graph-mode="focus" title="Inspect selected node neighborhood">🎯 Focus Subgraph</button>
+              <button class="filter-pill" data-graph-mode="all" title="Full network">All (Flat)</button>
+            </div>
+          </div>
+
+          <div class="graph-toolbar-group">
+            <div class="filter-pills" id="graphTypePills">
+              <button class="filter-pill active" data-graph-type="all">All Types</button>
+              <button class="filter-pill" data-graph-type="round">Rounds</button>
+              <button class="filter-pill" data-graph-type="issue">Issues</button>
+              <button class="filter-pill" data-graph-type="p0p1">🔴 Blockers</button>
+            </div>
+
+            <div class="graph-search-box">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+              <input type="text" id="graphSearchInput" placeholder="Filter graph nodes..." />
+              <button id="graphSearchClear" style="display: none; background: none; border: none; color: var(--text-dim); cursor: pointer; padding: 0 4px; font-size: 12px;">✕</button>
+            </div>
+          </div>
+        </div>
+
         <div class="graph-workspace" id="graphWorkspace">
           <div class="graph-floating-controls">
             <span class="graph-stat-pill" id="graphNodeEdgeCount">0 nodes</span>
-            <button class="graph-zoom-btn" id="btnZoomIn" title="Zoom In">+</button>
-            <button class="graph-zoom-btn" id="btnZoomOut" title="Zoom Out">−</button>
-            <button class="graph-zoom-btn" id="btnZoomReset" title="Reset Zoom">↺</button>
-            <button class="graph-zoom-btn" id="btnZoomFit" title="Fit Screen" style="width: 44px; font-size: 11px;">Fit</button>
+            <button class="graph-zoom-btn" id="btnZoomIn" title="Zoom In (Ctrl+Wheel)">+</button>
+            <button class="graph-zoom-btn" id="btnZoomOut" title="Zoom Out (Ctrl+Wheel)">−</button>
+            <button class="graph-zoom-btn" id="btnZoomReset" title="Reset View">↺</button>
+            <button class="graph-zoom-btn" id="btnZoomFit" title="Fit to Screen" style="width: auto; padding: 0 8px; font-size: 11px;">Fit</button>
+            <div class="graph-nav-hint">
+              <span>Scroll to pan • Ctrl+wheel to zoom</span>
+            </div>
           </div>
 
           <div class="graph-canvas" id="graphCanvas">
@@ -2267,6 +2391,10 @@
       searchQuery: "",
       selectedNodeId: null,
       selectedDocPath: null,
+      graphMode: "timeline",
+      graphTypeFilter: "all",
+      graphSearchQuery: "",
+      nodePositions: new Map(),
       zoom: 1,
       panX: 40,
       panY: 40,
@@ -2404,33 +2532,44 @@
       const docs = DATA.documents || [];
 
       // Update Header Badges
-      document.getElementById("tabIssueCount").textContent = summary.open_issues || 0;
-      document.getElementById("tabDocCount").textContent = docs.length;
+      const tabIssue = document.getElementById("tabIssueCount");
+      if (tabIssue) tabIssue.textContent = summary.open_issues || 0;
+      const tabDoc = document.getElementById("tabDocCount");
+      if (tabDoc) tabDoc.textContent = docs.length;
 
       // Update KPIs
       const p0Count = (summary.severity_counts && summary.severity_counts.P0) || 0;
       const p1Count = (summary.severity_counts && summary.severity_counts.P1) || 0;
       const p0El = document.getElementById("kpiP0Count");
-      p0El.textContent = p0Count;
-      p0El.style.color = p0Count > 0 ? "var(--danger)" : "var(--success)";
-      document.getElementById("kpiBlockerSubtext").textContent = `${p0Count} P0 blockers, ${p1Count} P1 urgent issues`;
+      if (p0El) {
+        p0El.textContent = p0Count;
+        p0El.style.color = p0Count > 0 ? "var(--danger)" : "var(--success)";
+      }
+      const blockerEl = document.getElementById("kpiBlockerSubtext");
+      if (blockerEl) blockerEl.textContent = `${p0Count} P0 blockers, ${p1Count} P1 urgent issues`;
 
-      document.getElementById("kpiOpenIssues").textContent = summary.open_issues || 0;
+      const openIssuesEl = document.getElementById("kpiOpenIssues");
+      if (openIssuesEl) openIssuesEl.textContent = summary.open_issues || 0;
       const totalIssues = summary.total_issues || 1;
       const fixRate = Math.round(((summary.fixed_issues || 0) / totalIssues) * 100);
-      document.getElementById("kpiIssueRate").textContent = `${summary.fixed_issues || 0} fixed (${fixRate}% resolution)`;
+      const rateEl = document.getElementById("kpiIssueRate");
+      if (rateEl) rateEl.textContent = `${summary.fixed_issues || 0} fixed (${fixRate}% resolution)`;
 
-      document.getElementById("kpiRoundCount").textContent = rounds.length;
-      document.getElementById("kpiDocCount").textContent = docs.length;
+      const roundCountEl = document.getElementById("kpiRoundCount");
+      if (roundCountEl) roundCountEl.textContent = rounds.length;
+      const docCountEl = document.getElementById("kpiDocCount");
+      if (docCountEl) docCountEl.textContent = docs.length;
 
       // Hero tags
       const tagsContainer = document.getElementById("heroTags");
-      tagsContainer.innerHTML = `
-        <span class="pill status-open">Audited Lineage</span>
-        <span class="pill p1">75-Run Matrix Verified</span>
-        <span class="pill p3">Horizon Delay Scaling</span>
-        <span class="pill p2">Stopping Rules Enforced</span>
-      `;
+      if (tagsContainer) {
+        tagsContainer.innerHTML = `
+          <span class="pill status-open">Audited Lineage</span>
+          <span class="pill p1">75-Run Matrix Verified</span>
+          <span class="pill p3">Horizon Delay Scaling</span>
+          <span class="pill p2">Stopping Rules Enforced</span>
+        `;
+      }
 
       // Render Methodology Scorecard
       const scorecardContainer = document.getElementById("scorecardGrid");
@@ -2491,6 +2630,7 @@
     function renderSeverityBar(sevCounts) {
       const container = document.getElementById("severityBar");
       const legend = document.getElementById("severityLegend");
+      if (!container || !legend) return;
       container.innerHTML = "";
       legend.innerHTML = "";
 
@@ -2537,6 +2677,7 @@
 
     function renderMilestonesTimeline(rounds) {
       const container = document.getElementById("overviewTimeline");
+      if (!container) return;
       container.innerHTML = "";
       // Show latest 5 rounds or studies
       const latest = [...rounds].reverse().slice(0, 6);
@@ -2566,6 +2707,7 @@
     // -------------------------------------------------------------
     function renderIssuesTable() {
       const tbody = document.getElementById("issuesTableBody");
+      if (!tbody) return;
       tbody.innerHTML = "";
 
       let issues = DATA.issues || [];
@@ -2600,7 +2742,8 @@
         );
       }
 
-      document.getElementById("issueTableCountLabel").textContent = `Showing ${issues.length} of ${DATA.issues ? DATA.issues.length : 0} issues`;
+      const countLabel = document.getElementById("issueTableCountLabel");
+      if (countLabel) countLabel.textContent = `Showing ${issues.length} of ${DATA.issues ? DATA.issues.length : 0} issues`;
 
       issues.slice(0, 200).forEach(issue => {
         const tr = document.createElement("tr");
@@ -2682,9 +2825,12 @@
 
     function initGraphWorkspace() {
       const ws = document.getElementById("graphWorkspace");
+      if (!ws || ws.dataset.initialized) return;
+      ws.dataset.initialized = "true";
 
+      // 1. Mouse Drag Panning
       ws.addEventListener("mousedown", (e) => {
-        if (e.target.closest(".node-card") || e.target.closest(".graph-floating-controls")) return;
+        if (e.target.closest(".node-card") || e.target.closest(".graph-floating-controls") || e.target.closest(".graph-top-toolbar")) return;
         state.isPanning = true;
         state.startX = e.clientX - state.panX;
         state.startY = e.clientY - state.panY;
@@ -2699,37 +2845,190 @@
 
       window.addEventListener("mouseup", () => { state.isPanning = false; });
 
+      // 2. Wheel Event: PAN on normal 2-finger scroll or wheel, ZOOM only with Ctrl/Cmd or trackpad pinch
       ws.addEventListener("wheel", (e) => {
         e.preventDefault();
-        const factor = e.deltaY < 0 ? 1.1 : 0.9;
-        state.zoom = Math.min(Math.max(state.zoom * factor, 0.25), 2.5);
+        if (e.ctrlKey || e.metaKey) {
+          // Trackpad pinch-to-zoom or Cmd/Ctrl+Scroll
+          const zoomFactor = e.deltaY < 0 ? 1.08 : 0.92;
+          const rect = ws.getBoundingClientRect();
+          const mouseX = e.clientX - rect.left;
+          const mouseY = e.clientY - rect.top;
+
+          const oldZoom = state.zoom;
+          const newZoom = Math.min(Math.max(oldZoom * zoomFactor, 0.15), 3.0);
+
+          state.panX = mouseX - (mouseX - state.panX) * (newZoom / oldZoom);
+          state.panY = mouseY - (mouseY - state.panY) * (newZoom / oldZoom);
+          state.zoom = newZoom;
+        } else {
+          // Standard two-finger trackpad or mouse wheel scroll = 2D PAN
+          state.panX -= e.deltaX;
+          state.panY -= e.deltaY;
+        }
         applyGraphTransform();
       }, { passive: false });
 
-      document.getElementById("btnZoomIn").onclick = () => { state.zoom = Math.min(state.zoom * 1.2, 2.5); applyGraphTransform(); };
-      document.getElementById("btnZoomOut").onclick = () => { state.zoom = Math.max(state.zoom * 0.8, 0.25); applyGraphTransform(); };
-      document.getElementById("btnZoomReset").onclick = () => { state.zoom = 1; state.panX = 40; state.panY = 40; applyGraphTransform(); };
-      document.getElementById("btnZoomFit").onclick = fitGraphToScreen;
-      document.getElementById("drawerCloseBtn").onclick = () => {
-        document.getElementById("sideDrawer").style.display = "none";
+      // 3. Zoom Button Controls
+      document.getElementById("btnZoomIn").onclick = () => zoomAtCenter(1.25);
+      document.getElementById("btnZoomOut").onclick = () => zoomAtCenter(0.8);
+      document.getElementById("btnZoomReset").onclick = () => {
+        state.zoom = 1;
+        state.panX = 40;
+        state.panY = 40;
+        applyGraphTransform();
       };
+      document.getElementById("btnZoomFit").onclick = fitGraphToScreen;
+
+      // 4. Graph Mode Switcher Pills
+      document.querySelectorAll("#graphModePills button").forEach(btn => {
+        btn.addEventListener("click", () => {
+          document.querySelectorAll("#graphModePills button").forEach(b => b.classList.remove("active"));
+          btn.classList.add("active");
+          state.graphMode = btn.getAttribute("data-graph-mode") || "timeline";
+          layoutGraph();
+        });
+      });
+
+      // 5. Graph Type Filter Pills
+      document.querySelectorAll("#graphTypePills button").forEach(btn => {
+        btn.addEventListener("click", () => {
+          document.querySelectorAll("#graphTypePills button").forEach(b => b.classList.remove("active"));
+          btn.classList.add("active");
+          state.graphTypeFilter = btn.getAttribute("data-graph-type") || "all";
+          layoutGraph();
+        });
+      });
+
+      // 6. In-Graph Search Bar
+      const searchInput = document.getElementById("graphSearchInput");
+      const clearBtn = document.getElementById("graphSearchClear");
+      if (searchInput) {
+        searchInput.addEventListener("input", (e) => {
+          const query = e.target.value.toLowerCase().trim();
+          state.graphSearchQuery = query;
+          if (clearBtn) clearBtn.style.display = query ? "inline-block" : "none";
+          filterGraphNodesLive(query);
+        });
+
+        if (clearBtn) {
+          clearBtn.addEventListener("click", () => {
+            searchInput.value = "";
+            state.graphSearchQuery = "";
+            clearBtn.style.display = "none";
+            filterGraphNodesLive("");
+          });
+        }
+
+        searchInput.addEventListener("keydown", (e) => {
+          if (e.key === "Enter") {
+            const query = state.graphSearchQuery;
+            if (!query) return;
+            const matchedCard = document.querySelector("#graphNodesContainer .node-card:not(.dimmed)");
+            if (matchedCard && matchedCard.dataset.nodeId) {
+              const nodeId = matchedCard.dataset.nodeId;
+              state.selectedNodeId = nodeId;
+              highlightLineage(nodeId);
+              centerOnNode(nodeId);
+              const n = nodeMap.get(nodeId);
+              if (n) showNodeDetails(n);
+            }
+          }
+        });
+      }
+    }
+
+    function zoomAtCenter(factor) {
+      const ws = document.getElementById("graphWorkspace");
+      if (!ws) return;
+      const rect = ws.getBoundingClientRect();
+      const centerX = rect.width / 2;
+      const centerY = rect.height / 2;
+      const oldZoom = state.zoom;
+      const newZoom = Math.min(Math.max(oldZoom * factor, 0.15), 3.0);
+      state.panX = centerX - (centerX - state.panX) * (newZoom / oldZoom);
+      state.panY = centerY - (centerY - state.panY) * (newZoom / oldZoom);
+      state.zoom = newZoom;
+      applyGraphTransform();
     }
 
     function applyGraphTransform() {
       const canvas = document.getElementById("graphCanvas");
-      canvas.style.transform = `translate(${state.panX}px, ${state.panY}px) scale(${state.zoom})`;
+      if (canvas) {
+        canvas.style.transform = `translate(${state.panX}px, ${state.panY}px) scale(${state.zoom})`;
+      }
+    }
+
+    function centerOnNode(nodeId) {
+      const pos = state.nodePositions && state.nodePositions.get(nodeId);
+      if (!pos) return;
+      const ws = document.getElementById("graphWorkspace");
+      if (!ws) return;
+      const rect = ws.getBoundingClientRect();
+      state.panX = (rect.width / 2) - (pos.x + 120) * state.zoom;
+      state.panY = (rect.height / 2) - (pos.y + 45) * state.zoom;
+      applyGraphTransform();
+    }
+
+    function filterGraphNodesLive(query) {
+      const cards = document.querySelectorAll("#graphNodesContainer .node-card");
+      if (!query) {
+        cards.forEach(c => c.classList.remove("dimmed"));
+        document.querySelectorAll("#graphEdgesSvg .edge-line").forEach(l => l.classList.remove("dimmed"));
+        return;
+      }
+      cards.forEach(card => {
+        const text = (card.textContent || "").toLowerCase();
+        const isMatch = text.includes(query);
+        card.classList.toggle("dimmed", !isMatch);
+      });
+      document.querySelectorAll("#graphEdgesSvg .edge-line").forEach(line => {
+        line.classList.add("dimmed");
+      });
     }
 
     function fitGraphToScreen() {
-      state.zoom = 0.75;
-      state.panX = 60;
-      state.panY = 60;
+      const ws = document.getElementById("graphWorkspace");
+      if (!ws) return;
+      const rect = ws.getBoundingClientRect();
+      const positions = state.nodePositions;
+      if (!positions || positions.size === 0) {
+        state.zoom = 0.85;
+        state.panX = 60;
+        state.panY = 60;
+        applyGraphTransform();
+        return;
+      }
+
+      let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
+      positions.forEach(pos => {
+        if (pos.x < minX) minX = pos.x;
+        if (pos.x > maxX) maxX = pos.x;
+        if (pos.y < minY) minY = pos.y;
+        if (pos.y > maxY) maxY = pos.y;
+      });
+
+      const contentW = maxX - minX + 280;
+      const contentH = maxY - minY + 120;
+      const scaleX = (rect.width - 60) / Math.max(contentW, 100);
+      const scaleY = (rect.height - 60) / Math.max(contentH, 100);
+
+      if (state.graphMode === "timeline") {
+        state.zoom = Math.min(Math.max(scaleY, 0.4), 1.0);
+        state.panX = 60 - minX * state.zoom;
+        state.panY = Math.max(20, (rect.height - contentH * state.zoom) / 2) - minY * state.zoom;
+      } else {
+        state.zoom = Math.min(Math.max(Math.min(scaleX, scaleY), 0.18), 1.0);
+        state.panX = Math.max(20, (rect.width - contentW * state.zoom) / 2) - minX * state.zoom;
+        state.panY = Math.max(20, (rect.height - contentH * state.zoom) / 2) - minY * state.zoom;
+      }
       applyGraphTransform();
     }
 
     function layoutGraph() {
       const container = document.getElementById("graphNodesContainer");
       const svg = document.getElementById("graphEdgesSvg");
+      if (!container || !svg) return;
       container.innerHTML = "";
       svg.innerHTML = "";
 
@@ -2743,33 +3042,241 @@
         edges = edges.filter(e => activeIds.has(e.source) && activeIds.has(e.target));
       }
 
-      document.getElementById("graphNodeEdgeCount").textContent = `${nodes.length} nodes / ${edges.length} links`;
+      // Filter by Type Pill
+      if (state.graphTypeFilter === "round") {
+        nodes = nodes.filter(n => n.kind === "round" || n.kind === "experiment" || n.kind === "study" || n.kind === "benchmark");
+        const activeIds = new Set(nodes.map(n => n.id));
+        edges = edges.filter(e => activeIds.has(e.source) && activeIds.has(e.target));
+      } else if (state.graphTypeFilter === "issue") {
+        nodes = nodes.filter(n => n.kind === "issue" || n.kind === "round" || n.kind === "experiment");
+        const activeIds = new Set(nodes.map(n => n.id));
+        edges = edges.filter(e => activeIds.has(e.source) && activeIds.has(e.target));
+      } else if (state.graphTypeFilter === "p0p1") {
+        const p0p1Issues = new Set(nodes.filter(n => n.kind === "issue" && ["P0", "P1"].includes((n.severity || "").toUpperCase())).map(n => n.id));
+        const relevantRoundIds = new Set();
+        edges.forEach(e => {
+          if (p0p1Issues.has(e.target)) relevantRoundIds.add(e.source);
+          if (p0p1Issues.has(e.source)) relevantRoundIds.add(e.target);
+        });
+        nodes = nodes.filter(n => p0p1Issues.has(n.id) || (n.kind === "round" && relevantRoundIds.has(n.id)) || n.kind === "experiment");
+        const activeIds = new Set(nodes.map(n => n.id));
+        edges = edges.filter(e => activeIds.has(e.source) && activeIds.has(e.target));
+      }
 
-      // Assign hierarchical column positions
-      // Col 0: Experiment | Col 1: Rounds | Col 2: Issues | Col 3: Reports & Artifacts
-      const colWidth = 320;
-      const rowHeight = 90;
-      const colCounters = [0, 0, 0, 0, 0];
-      const positions = new Map();
-
-      const getCol = (kind) => {
-        if (kind === "experiment") return 0;
-        if (kind === "round" || kind === "study" || kind === "benchmark") return 1;
-        if (kind === "issue") return 2;
-        return 3;
-      };
-
-      nodes.forEach(node => {
-        const col = getCol(node.kind);
-        const row = colCounters[col]++;
-        const x = 50 + col * colWidth;
-        const y = 50 + row * rowHeight;
-        positions.set(node.id, { x, y });
+      const outEdges = new Map();
+      const inEdges = new Map();
+      edges.forEach(e => {
+        if (!outEdges.has(e.source)) outEdges.set(e.source, []);
+        outEdges.get(e.source).push(e);
+        if (!inEdges.has(e.target)) inEdges.set(e.target, []);
+        inEdges.get(e.target).push(e);
       });
 
-      // SVG dimensions
-      const maxX = Math.max(...Array.from(positions.values()).map(p => p.x)) + colWidth + 100;
-      const maxY = Math.max(...Array.from(positions.values()).map(p => p.y)) + 200;
+      const positions = new Map();
+      state.nodePositions = positions;
+
+      // Layout Algorithms
+      if (state.graphMode === "focus") {
+        // --- 🎯 Focus Subgraph Mode ---
+        let focusId = state.selectedNodeId;
+        if (!focusId || !nodeMap.has(focusId)) {
+          const rounds = nodes.filter(n => n.kind === "round");
+          focusId = rounds.length ? rounds[rounds.length - 1].id : (nodes[0] ? nodes[0].id : null);
+          state.selectedNodeId = focusId;
+        }
+
+        const focusNode = nodeMap.get(focusId);
+        if (focusNode) {
+          const upstream = (inEdges.get(focusId) || []).map(e => nodeMap.get(e.source)).filter(Boolean);
+          const downstream = (outEdges.get(focusId) || []).map(e => nodeMap.get(e.target)).filter(Boolean);
+
+          const visibleNodes = [focusNode, ...upstream, ...downstream];
+          const visibleIdSet = new Set(visibleNodes.map(n => n.id));
+          nodes = visibleNodes;
+          edges = edges.filter(e => visibleIdSet.has(e.source) && visibleIdSet.has(e.target));
+
+          positions.set(focusId, { x: 560, y: 260 });
+
+          const startUpY = 260 - Math.min(upstream.length, 10) * 45;
+          upstream.slice(0, 15).forEach((p, idx) => {
+            positions.set(p.id, { x: 140, y: Math.max(50, startUpY + idx * 95) });
+          });
+
+          const startDownY = 260 - Math.min(downstream.length, 15) * 45;
+          downstream.slice(0, 20).forEach((c, idx) => {
+            positions.set(c.id, { x: 980, y: Math.max(50, startDownY + idx * 95) });
+          });
+        }
+      } else if (state.graphMode === "clustered") {
+        // --- 🔬 Clustered DAG by Epochs ---
+        function getRoundNum(n) {
+          const m = (n.title || n.id || "").match(/round_(\d+)/i);
+          return m ? parseInt(m[1], 10) : 999;
+        }
+        const expNodes = nodes.filter(n => n.kind === "experiment");
+        expNodes.forEach((exp, idx) => positions.set(exp.id, { x: 40, y: 120 + idx * 110 }));
+
+        const roundNodes = nodes.filter(n => n.kind === "round" || n.kind === "study" || n.kind === "benchmark")
+          .sort((a, b) => getRoundNum(a) - getRoundNum(b));
+
+        const epochs = [
+          { name: "Epoch 1: Baseline & Core Exploration (Rounds 0–25)", rounds: [] },
+          { name: "Epoch 2: Architecture & Hyperparameter Scaling (Rounds 26–50)", rounds: [] },
+          { name: "Epoch 3: Refinement, Rebuttal & Final Benchmarking (Rounds 51+)", rounds: [] }
+        ];
+
+        roundNodes.forEach(r => {
+          const num = getRoundNum(r);
+          if (num <= 25) epochs[0].rounds.push(r);
+          else if (num <= 50) epochs[1].rounds.push(r);
+          else epochs[2].rounds.push(r);
+        });
+
+        let currentY = 50;
+        epochs.forEach((ep) => {
+          if (ep.rounds.length === 0) return;
+          const epBox = document.createElement("div");
+          epBox.className = "epoch-group-box";
+          epBox.style.left = "320px";
+          epBox.style.top = currentY + "px";
+
+          const epLabel = document.createElement("div");
+          epLabel.className = "epoch-group-label";
+          epLabel.textContent = ep.name;
+          epBox.appendChild(epLabel);
+
+          const cols = 4;
+          const rows = Math.ceil(ep.rounds.length / cols);
+          const boxWidth = cols * 280 + 40;
+          const boxHeight = rows * 220 + 60;
+          epBox.style.width = boxWidth + "px";
+          epBox.style.height = boxHeight + "px";
+          container.appendChild(epBox);
+
+          ep.rounds.forEach((r, idx) => {
+            const c = idx % cols;
+            const row = Math.floor(idx / cols);
+            const rx = 340 + c * 280;
+            const ry = currentY + 35 + row * 220;
+            positions.set(r.id, { x: rx, y: ry });
+
+            // Attached child issues placed directly below
+            const issues = (outEdges.get(r.id) || []).map(e => nodeMap.get(e.target)).filter(n => n && n.kind === "issue");
+            issues.slice(0, 2).forEach((iss, j) => {
+              positions.set(iss.id, { x: rx, y: ry + 80 + j * 65 });
+            });
+          });
+
+          currentY += boxHeight + 40;
+        });
+
+        // Place any other nodes
+        let leftoverY = 50;
+        nodes.forEach(n => {
+          if (!positions.has(n.id)) {
+            positions.set(n.id, { x: 1500, y: leftoverY });
+            leftoverY += 85;
+          }
+        });
+      } else if (state.graphMode === "all") {
+        // --- All Flat Multi-Column Layout ---
+        const positionsByCol = { exp: [], rounds: [], issues: [], reports: [] };
+        nodes.forEach(n => {
+          if (n.kind === "experiment") positionsByCol.exp.push(n);
+          else if (n.kind === "round" || n.kind === "study" || n.kind === "benchmark") positionsByCol.rounds.push(n);
+          else if (n.kind === "issue") positionsByCol.issues.push(n);
+          else positionsByCol.reports.push(n);
+        });
+
+        positionsByCol.exp.forEach((n, idx) => positions.set(n.id, { x: 50, y: 50 + idx * 100 }));
+        positionsByCol.rounds.forEach((n, idx) => positions.set(n.id, { x: 340, y: 50 + idx * 85 }));
+        
+        // Split issues into 3 sub-columns
+        positionsByCol.issues.forEach((n, idx) => {
+          const subCol = idx % 3;
+          const subRow = Math.floor(idx / 3);
+          positions.set(n.id, { x: 640 + subCol * 280, y: 50 + subRow * 85 });
+        });
+
+        positionsByCol.reports.forEach((n, idx) => positions.set(n.id, { x: 1520, y: 50 + idx * 80 }));
+      } else {
+        // --- ⏱️ Timeline Flow (Default) ---
+        function getRoundOrder(n) {
+          const title = (n.title || n.id || "").toLowerCase();
+          const m = title.match(/round_(\d+)/);
+          if (m) {
+            const num = parseInt(m[1], 10);
+            const isRebuttal = title.includes("rebuttal") ? 0.5 : 0;
+            return { category: 0, order: num + isRebuttal, name: title };
+          }
+          if (title.includes("diag_")) return { category: 1, order: 0, name: title };
+          if (title.includes("study_")) return { category: 2, order: 0, name: title };
+          return { category: 3, order: 0, name: title };
+        }
+
+        const expNodes = nodes.filter(n => n.kind === "experiment");
+        expNodes.forEach((exp, idx) => {
+          positions.set(exp.id, { x: 40, y: 260 + idx * 110 });
+        });
+
+        const roundNodes = nodes.filter(n => n.kind === "round" || n.kind === "study" || n.kind === "benchmark")
+          .sort((a, b) => {
+            const oA = getRoundOrder(a);
+            const oB = getRoundOrder(b);
+            if (oA.category !== oB.category) return oA.category - oB.category;
+            if (oA.order !== oB.order) return oA.order - oB.order;
+            return oA.name.localeCompare(oB.name);
+          });
+
+        roundNodes.forEach((round, i) => {
+          const rx = 320 + i * 300;
+          const ry = 260;
+          positions.set(round.id, { x: rx, y: ry });
+
+          // Reports & Files above the round
+          const upperChildren = (outEdges.get(round.id) || [])
+            .map(e => nodeMap.get(e.target))
+            .filter(n => n && (n.kind === "report" || n.kind === "file"));
+          upperChildren.forEach((rep, k) => {
+            positions.set(rep.id, { x: rx, y: 150 - k * 95 });
+          });
+
+          // Issues & findings below the round
+          const lowerChildren = (outEdges.get(round.id) || [])
+            .map(e => nodeMap.get(e.target))
+            .filter(n => n && n.kind === "issue");
+          lowerChildren.forEach((iss, j) => {
+            const iy = 380 + j * 95;
+            positions.set(iss.id, { x: rx, y: iy });
+
+            // Next actions attached to issue
+            const nextActs = (outEdges.get(iss.id) || [])
+              .map(e => nodeMap.get(e.target))
+              .filter(n => n && n.kind === "next");
+            nextActs.slice(0, 1).forEach(nxt => {
+              positions.set(nxt.id, { x: rx + 30, y: iy + 45 });
+            });
+          });
+        });
+
+        // Any remaining nodes placed neatly
+        let leftoverY = 50;
+        nodes.forEach(n => {
+          if (!positions.has(n.id)) {
+            positions.set(n.id, { x: 320 + roundNodes.length * 300 + 40, y: leftoverY });
+            leftoverY += 85;
+          }
+        });
+      }
+
+      document.getElementById("graphNodeEdgeCount").textContent = `${nodes.length} nodes / ${edges.length} links`;
+
+      // Calculate SVG dimensions
+      let maxX = 1200, maxY = 800;
+      positions.forEach(p => {
+        if (p.x + 300 > maxX) maxX = p.x + 300;
+        if (p.y + 200 > maxY) maxY = p.y + 200;
+      });
       svg.setAttribute("width", maxX);
       svg.setAttribute("height", maxY);
 
@@ -2780,13 +3287,36 @@
         if (!p1 || !p2) return;
 
         const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
-        const x1 = p1.x + 240;
-        const y1 = p1.y + 35;
-        const x2 = p2.x;
-        const y2 = p2.y + 35;
-        const mid = (x1 + x2) / 2;
+        let d = "";
 
-        path.setAttribute("d", `M ${x1} ${y1} C ${mid} ${y1}, ${mid} ${y2}, ${x2} ${y2}`);
+        if (state.graphMode === "timeline") {
+          if (Math.abs(p1.y - p2.y) < 20) {
+            // Horizontal sequence (Round -> Round)
+            const x1 = p1.x + 240, y1 = p1.y + 35;
+            const x2 = p2.x, y2 = p2.y + 35;
+            d = `M ${x1} ${y1} L ${x2} ${y2}`;
+          } else if (p2.y > p1.y) {
+            // Downward (Round -> Issue)
+            const x1 = p1.x + 120, y1 = p1.y + 70;
+            const x2 = p2.x + 120, y2 = p2.y;
+            const midY = (y1 + y2) / 2;
+            d = `M ${x1} ${y1} C ${x1} ${midY}, ${x2} ${midY}, ${x2} ${y2}`;
+          } else {
+            // Upward (Round -> Report)
+            const x1 = p1.x + 120, y1 = p1.y;
+            const x2 = p2.x + 120, y2 = p2.y + 70;
+            const midY = (y1 + y2) / 2;
+            d = `M ${x1} ${y1} C ${x1} ${midY}, ${x2} ${midY}, ${x2} ${y2}`;
+          }
+        } else {
+          // Standard horizontal flow
+          const x1 = p1.x + 240, y1 = p1.y + 35;
+          const x2 = p2.x, y2 = p2.y + 35;
+          const midX = (x1 + x2) / 2;
+          d = `M ${x1} ${y1} C ${midX} ${y1}, ${midX} ${y2}, ${x2} ${y2}`;
+        }
+
+        path.setAttribute("d", d);
         path.setAttribute("class", "edge-line");
         path.dataset.source = edge.source;
         path.dataset.target = edge.target;
@@ -2800,6 +3330,8 @@
 
         const card = document.createElement("div");
         card.className = `node-card ${node.kind || ""}`;
+        if (node.id === state.selectedNodeId) card.classList.add("selected");
+        card.dataset.nodeId = node.id;
         card.style.left = pos.x + "px";
         card.style.top = pos.y + "px";
 
@@ -2817,17 +3349,23 @@
         `;
 
         card.addEventListener("click", () => {
-          document.querySelectorAll(".node-card").forEach(c => c.classList.remove("selected"));
+          document.querySelectorAll("#graphNodesContainer .node-card").forEach(c => c.classList.remove("selected"));
           card.classList.add("selected");
           state.selectedNodeId = node.id;
           highlightLineage(node.id);
           showNodeDetails(node);
+          if (state.graphMode === "focus") {
+            layoutGraph();
+          }
         });
 
         container.appendChild(card);
       });
 
       applyGraphTransform();
+      if (state.graphSearchQuery) {
+        filterGraphNodesLive(state.graphSearchQuery);
+      }
     }
 
     function highlightLineage(selectedId) {
@@ -2837,10 +3375,12 @@
         if (e.target === selectedId) connected.add(e.source);
       });
 
-      document.querySelectorAll(".node-card").forEach(card => {
-        card.classList.remove("dimmed");
+      document.querySelectorAll("#graphNodesContainer .node-card").forEach(card => {
+        const id = card.dataset.nodeId;
+        const isConn = connected.has(id);
+        card.classList.toggle("dimmed", !isConn);
       });
-      document.querySelectorAll(".edge-line").forEach(line => {
+      document.querySelectorAll("#graphEdgesSvg .edge-line").forEach(line => {
         const isConn = (line.dataset.source === selectedId || line.dataset.target === selectedId);
         line.classList.toggle("highlighted", isConn);
         line.classList.toggle("dimmed", !isConn);
@@ -3388,6 +3928,7 @@
     // -------------------------------------------------------------
     function renderDocuments() {
       const sidebar = document.getElementById("docsSidebar");
+      if (!sidebar) return;
       sidebar.innerHTML = "";
 
       const docs = DATA.documents || [];
@@ -3445,17 +3986,23 @@
 
     function displayDocument(doc) {
       state.selectedDocPath = doc.path;
-      document.getElementById("docPathLabel").textContent = doc.path;
-      document.getElementById("copyDocPathBtn").onclick = () => {
-        navigator.clipboard.writeText(doc.path);
-        document.getElementById("copyDocPathBtn").textContent = "Copied!";
-        setTimeout(() => { document.getElementById("copyDocPathBtn").textContent = "Copy Path"; }, 1500);
-      };
+      const pathLabel = document.getElementById("docPathLabel");
+      if (pathLabel) pathLabel.textContent = doc.path;
+      const copyBtn = document.getElementById("copyDocPathBtn");
+      if (copyBtn) {
+        copyBtn.onclick = () => {
+          if (navigator.clipboard) navigator.clipboard.writeText(doc.path);
+          copyBtn.textContent = "Copied!";
+          setTimeout(() => { copyBtn.textContent = "Copy Path"; }, 1500);
+        };
+      }
 
       const renderArea = document.getElementById("docRenderArea");
-      renderArea.innerHTML = simpleMarkdownRender(doc.content || "");
-      buildDocumentToc();
-      applyMathRendering(renderArea);
+      if (renderArea) {
+        renderArea.innerHTML = simpleMarkdownRender(doc.content || "");
+        buildDocumentToc();
+        applyMathRendering(renderArea);
+      }
     }
 
     function buildDocumentToc() {
