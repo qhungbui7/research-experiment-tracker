@@ -18,7 +18,18 @@ def serve_dashboard(
     """Serve the generated IDEA_GRAPH.html review explorer via local HTTP."""
     target_dir = config.reviews_dir if (config.reviews_dir / "IDEA_GRAPH.html").exists() else config.root_dir
 
-    handler = functools.partial(http.server.SimpleHTTPRequestHandler, directory=str(target_dir))
+    class DashboardHandler(http.server.SimpleHTTPRequestHandler):
+        def do_GET(self):
+            if self.path in ("/", "/index.html"):
+                idea_graph = Path(self.directory) / "IDEA_GRAPH.html"
+                if idea_graph.exists():
+                    self.send_response(302)
+                    self.send_header("Location", "/IDEA_GRAPH.html")
+                    self.end_headers()
+                    return
+            return super().do_GET()
+
+    handler = functools.partial(DashboardHandler, directory=str(target_dir))
 
     class ReusableTCPServer(socketserver.TCPServer):
         allow_reuse_address = True
